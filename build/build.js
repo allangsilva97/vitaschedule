@@ -2,8 +2,8 @@
 /*
  * Build do VitaSchedule.
  *
- *   npm install        (uma vez; instala o Tailwind 3.4.17 fixado em package-lock.json)
- *   npm run build      (rode sempre que editar o HTML: classes do Tailwind OU o <script> inline)
+ *   npm run setup      (uma vez, na raiz do projeto; instala o Tailwind 3.4.17 fixado em package-lock.json)
+ *   npm run build      (na raiz ou dentro de build/; rode sempre que editar o HTML: classes do Tailwind OU o <script> inline)
  *
  * O que faz, em ordem:
  *   1. Compila o Tailwind lendo as classes do HTML (sem o <style> embutido) e embute o CSS no próprio HTML.
@@ -33,7 +33,7 @@ const sha256 = (s) => 'sha256-' + crypto.createHash('sha256').update(s, 'utf8').
 const fail = (msg) => { console.error('ERRO: ' + msg); process.exit(1); };
 
 if (!fs.existsSync(HTML)) fail('HTML não encontrado: ' + HTML);
-if (!fs.existsSync(CLI)) fail('Tailwind não instalado. Rode "npm install" nesta pasta primeiro.');
+if (!fs.existsSync(CLI)) fail('Tailwind não instalado. Rode "npm run setup" na raiz do projeto (ou "npm ci --ignore-scripts" dentro de build/).');
 
 let html = lf(fs.readFileSync(HTML, 'utf8'));
 if (!STYLE_RE.test(html)) fail('Bloco <style> não encontrado no HTML.');

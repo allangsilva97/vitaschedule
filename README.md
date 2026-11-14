@@ -48,10 +48,12 @@ O CSS do Tailwind é compilado e embutido no `index.html`, e a Content-Security-
 CSS **por hash** (sem `unsafe-inline`). Por isso, depois de editar o `index.html` (classes do Tailwind ou o
 `<script>`), rode o build para recompilar o CSS e atualizar os hashes; sem isso o navegador bloqueia o que mudou.
 
+Rode os comandos abaixo **na raiz do projeto** (a pasta que tem o `index.html`). É preciso ter o
+[Node.js](https://nodejs.org) instalado.
+
 ```bash
-cd build
-npm ci --ignore-scripts   # só na primeira vez (Tailwind 3.4.17 fixado no package-lock.json)
-npm run build
+npm run setup   # só na primeira vez (instala o Tailwind 3.4.17 fixado no package-lock.json)
+npm run build   # depois de cada edição no index.html
 ```
 
 Não edite à mão o bloco `<style>` nem os hashes da CSP: eles são regenerados a cada build.

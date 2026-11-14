@@ -1,0 +1,10 @@
+{
+  "name": "vitaschedule",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VitaSchedule: atalhos para a ferramenta de build que fica em build/",
+  "scripts": {
+    "setup": "npm ci --ignore-scripts --prefix build",
+    "build": "npm run build --prefix build"
+  }
+}
