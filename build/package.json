@@ -1,0 +1,12 @@
+{
+  "name": "vitaschedule-build",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Compila o Tailwind e atualiza os hashes da CSP de ../index.html",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}

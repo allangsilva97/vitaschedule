@@ -1,0 +1,13 @@
+# Cabeçalhos de segurança para hospedagens que leem este arquivo (Netlify, Cloudflare Pages).
+# O GitHub Pages NÃO aplica cabeçalhos personalizados: lá, a proteção contra clickjacking
+# fica por conta do código anti-iframe no próprio index.html.
+# A Content-Security-Policy principal já está na <meta> do index.html; esta aqui só acrescenta
+# frame-ancestors, que não funciona via <meta>. Várias CSPs se somam (vale a mais restritiva).
+/*
+  Content-Security-Policy: frame-ancestors 'none'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin
+  Strict-Transport-Security: max-age=31536000

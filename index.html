@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="light">
+<head>
+    <meta charset="UTF-8">
+    <!--
+      SEGURANÇA - Content-Security-Policy
+      * Scripts: só roda o script inline da aplicação (liberado por hash SHA-256). Sem 'unsafe-inline' nem 'unsafe-eval'.
+        Não há handlers inline (onclick=...); os eventos usam data-action + delegação.
+      * Estilos: o CSS do Tailwind é compilado e embutido no próprio arquivo (sem CDN), também liberado por hash.
+        Sem 'unsafe-inline' e sem scripts de terceiros.
+      * MANUTENÇÃO: depois de editar este arquivo (classes do Tailwind ou o script inline), rode "npm run build" na pasta
+        build/. Ele recompila o CSS e recalcula os hashes abaixo; sem isso o navegador bloqueia o que mudou.
+        Não edite o bloco de CSS à mão: ele é regenerado a cada build.
+      * frame-ancestors (anti-clickjacking) NÃO funciona via <meta>. Ao hospedar, envie por cabeçalho HTTP:
+        Content-Security-Policy: frame-ancestors 'none'  (e X-Frame-Options: DENY, X-Content-Type-Options: nosniff).
+    -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'none';
+        script-src 'sha256-sEcboUEPA7kHP6qoy+Yt0Y6DYNx7tYxjHshezO3be80=';
+        style-src 'sha256-5slBmCeDmx+lhFt1tySLPrkAdiLI5HILoNQL9XUDzvY=' https://cdnjs.cloudflare.com https://fonts.googleapis.com;
+        font-src https://cdnjs.cloudflare.com https://fonts.gstatic.com;
+        img-src data:;
+        connect-src 'none';
+        form-action 'none';
+        base-uri 'none';
+        object-src 'none'">
+    <meta name="referrer" content="no-referrer">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VitaSchedule - Clinic Appointment & Patient Management</title>
+    <link rel="icon" href="data:,">
+    <!-- FontAwesome Icons (com SRI) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <!-- Inter Font (o Google Fonts recebe o IP do visitante; para LGPD estrita, hospede a fonte localmente) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Estilos: Tailwind 3.4.17 compilado + CSS próprio. GERADO por build/build.js (npm run build). Não edite à mão. -->
+    <style>
+*,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.container{width:100%}@media (min-width:640px){.container{max-width:640px}}@media (min-width:768px){.container{max-width:768px}}@media (min-width:1024px){.container{max-width:1024px}}@media (min-width:1280px){.container{max-width:1280px}}@media (min-width:1536px){.container{max-width:1536px}}.pointer-events-none{pointer-events:none}.pointer-events-auto{pointer-events:auto}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0}.right-4{right:1rem}.right-5{right:1.25rem}.top-0{top:0}.top-4{top:1rem}.top-5{top:1.25rem}.z-10{z-index:10}.z-20{z-index:20}.z-30{z-index:30}.z-50{z-index:50}.z-\[60\]{z-index:60}.mx-auto{margin-left:auto;margin-right:auto}.-mt-6{margin-top:-1.5rem}.mb-1{margin-bottom:.25rem}.mb-12{margin-bottom:3rem}.mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}.mb-5{margin-bottom:1.25rem}.mb-6{margin-bottom:1.5rem}.ml-2{margin-left:.5rem}.mt-0\.5{margin-top:.125rem}.mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.mt-4{margin-top:1rem}.mt-8{margin-top:2rem}.mt-auto{margin-top:auto}.block{display:block}.inline-block{display:inline-block}.inline{display:inline}.flex{display:flex}.table{display:table}.grid{display:grid}.hidden{display:none}.h-10{height:2.5rem}.h-12{height:3rem}.h-14{height:3.5rem}.h-16{height:4rem}.max-h-\[90vh\]{max-height:90vh}.min-h-screen{min-height:100vh}.w-10{width:2.5rem}.w-12{width:3rem}.w-14{width:3.5rem}.w-16{width:4rem}.w-fit{width:-moz-fit-content;width:fit-content}.w-full{width:100%}.max-w-2xl{max-width:42rem}.max-w-3xl{max-width:48rem}.max-w-4xl{max-width:56rem}.max-w-7xl{max-width:80rem}.max-w-lg{max-width:32rem}.max-w-md{max-width:28rem}.max-w-sm{max-width:24rem}.flex-1{flex:1 1 0%}.translate-y-2{--tw-translate-y:0.5rem}.transform,.translate-y-2{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.cursor-pointer{cursor:pointer}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.flex-col{flex-direction:column}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.gap-8{gap:2rem}.space-x-2>:not([hidden])~:not([hidden]){--tw-space-x-reverse:0;margin-right:calc(.5rem*var(--tw-space-x-reverse));margin-left:calc(.5rem*(1 - var(--tw-space-x-reverse)))}.space-y-1>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.25rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.25rem*var(--tw-space-y-reverse))}.space-y-2>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.5rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.5rem*var(--tw-space-y-reverse))}.space-y-3>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.75rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.75rem*var(--tw-space-y-reverse))}.space-y-4>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem*var(--tw-space-y-reverse))}.space-y-6>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem*var(--tw-space-y-reverse))}.divide-y>:not([hidden])~:not([hidden]){--tw-divide-y-reverse:0;border-top-width:calc(1px*(1 - var(--tw-divide-y-reverse)));border-bottom-width:calc(1px*var(--tw-divide-y-reverse))}.divide-slate-100>:not([hidden])~:not([hidden]){--tw-divide-opacity:1;border-color:rgb(241 245 249/var(--tw-divide-opacity,1))}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.whitespace-nowrap{white-space:nowrap}.whitespace-pre-line{white-space:pre-line}.rounded{border-radius:.25rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:.5rem}.rounded-xl{border-radius:.75rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-amber-200{--tw-border-opacity:1;border-color:rgb(253 230 138/var(--tw-border-opacity,1))}.border-brand-500\/30{border-color:rgba(16,185,129,.3)}.border-slate-100{--tw-border-opacity:1;border-color:rgb(241 245 249/var(--tw-border-opacity,1))}.border-slate-200{--tw-border-opacity:1;border-color:rgb(226 232 240/var(--tw-border-opacity,1))}.bg-amber-50{--tw-bg-opacity:1;background-color:rgb(255 251 235/var(--tw-bg-opacity,1))}.bg-amber-600{--tw-bg-opacity:1;background-color:rgb(217 119 6/var(--tw-bg-opacity,1))}.bg-brand-50{--tw-bg-opacity:1;background-color:rgb(236 253 245/var(--tw-bg-opacity,1))}.bg-brand-500{--tw-bg-opacity:1;background-color:rgb(16 185 129/var(--tw-bg-opacity,1))}.bg-brand-500\/20{background-color:rgba(16,185,129,.2)}.bg-brand-600{--tw-bg-opacity:1;background-color:rgb(5 150 105/var(--tw-bg-opacity,1))}.bg-emerald-100{--tw-bg-opacity:1;background-color:rgb(209 250 229/var(--tw-bg-opacity,1))}.bg-emerald-50{--tw-bg-opacity:1;background-color:rgb(236 253 245/var(--tw-bg-opacity,1))}.bg-emerald-600{--tw-bg-opacity:1;background-color:rgb(5 150 105/var(--tw-bg-opacity,1))}.bg-rose-50{--tw-bg-opacity:1;background-color:rgb(255 241 242/var(--tw-bg-opacity,1))}.bg-rose-600{--tw-bg-opacity:1;background-color:rgb(225 29 72/var(--tw-bg-opacity,1))}.bg-slate-100{--tw-bg-opacity:1;background-color:rgb(241 245 249/var(--tw-bg-opacity,1))}.bg-slate-50{--tw-bg-opacity:1;background-color:rgb(248 250 252/var(--tw-bg-opacity,1))}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(30 41 59/var(--tw-bg-opacity,1))}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42/var(--tw-bg-opacity,1))}.bg-slate-900\/60{background-color:rgba(15,23,42,.6)}.bg-transparent{background-color:transparent}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1))}.bg-gradient-to-b{background-image:linear-gradient(to bottom,var(--tw-gradient-stops))}.from-emerald-900{--tw-gradient-from:#064e3b var(--tw-gradient-from-position);--tw-gradient-to:rgba(6,78,59,0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),var(--tw-gradient-to)}.to-slate-900{--tw-gradient-to:#0f172a var(--tw-gradient-to-position)}.p-2{padding:.5rem}.p-2\.5{padding:.625rem}.p-3{padding:.75rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.px-2{padding-left:.5rem;padding-right:.5rem}.px-2\.5{padding-left:.625rem;padding-right:.625rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-0\.5{padding-top:.125rem;padding-bottom:.125rem}.py-1{padding-top:.25rem;padding-bottom:.25rem}.py-16{padding-top:4rem;padding-bottom:4rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-2\.5{padding-top:.625rem;padding-bottom:.625rem}.py-3{padding-top:.75rem;padding-bottom:.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.py-8{padding-top:2rem;padding-bottom:2rem}.pb-2{padding-bottom:.5rem}.pb-3{padding-bottom:.75rem}.pt-2{padding-top:.5rem}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-4xl{font-size:2.25rem;line-height:2.5rem}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:.75rem;line-height:1rem}.font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.tracking-tight{letter-spacing:-.025em}.tracking-wider{letter-spacing:.05em}.text-amber-500{--tw-text-opacity:1;color:rgb(245 158 11/var(--tw-text-opacity,1))}.text-amber-600{--tw-text-opacity:1;color:rgb(217 119 6/var(--tw-text-opacity,1))}.text-amber-700{--tw-text-opacity:1;color:rgb(180 83 9/var(--tw-text-opacity,1))}.text-brand-600,.text-emerald-600{--tw-text-opacity:1;color:rgb(5 150 105/var(--tw-text-opacity,1))}.text-emerald-700{--tw-text-opacity:1;color:rgb(4 120 87/var(--tw-text-opacity,1))}.text-emerald-800{--tw-text-opacity:1;color:rgb(6 95 70/var(--tw-text-opacity,1))}.text-rose-600{--tw-text-opacity:1;color:rgb(225 29 72/var(--tw-text-opacity,1))}.text-rose-700{--tw-text-opacity:1;color:rgb(190 18 60/var(--tw-text-opacity,1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225/var(--tw-text-opacity,1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184/var(--tw-text-opacity,1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139/var(--tw-text-opacity,1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105/var(--tw-text-opacity,1))}.text-slate-700{--tw-text-opacity:1;color:rgb(51 65 85/var(--tw-text-opacity,1))}.text-slate-800{--tw-text-opacity:1;color:rgb(30 41 59/var(--tw-text-opacity,1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.opacity-0{opacity:0}.opacity-80{opacity:.8}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgba(0,0,0,.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color)}.shadow-2xl,.shadow-inner{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-inner{--tw-shadow:inset 0 2px 4px 0 rgba(0,0,0,.05);--tw-shadow-colored:inset 0 2px 4px 0 var(--tw-shadow-color)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color),0 4px 6px -4px var(--tw-shadow-color)}.shadow-lg,.shadow-md{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color),0 2px 4px -2px var(--tw-shadow-color)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgba(0,0,0,.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color)}.shadow-sm,.shadow-xl{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color),0 8px 10px -6px var(--tw-shadow-color)}.shadow-brand-500\/20{--tw-shadow-color:rgba(16,185,129,.2);--tw-shadow:var(--tw-shadow-colored)}.shadow-brand-500\/30{--tw-shadow-color:rgba(16,185,129,.3);--tw-shadow:var(--tw-shadow-colored)}.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter,-webkit-backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-colors{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1)}.duration-150,.transition-colors{transition-duration:.15s}.duration-200{transition-duration:.2s}.duration-300{transition-duration:.3s}body{font-family:Inter,sans-serif}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:9999px}.dark ::-webkit-scrollbar-thumb{background:#475569}.hover\:bg-amber-700:hover{--tw-bg-opacity:1;background-color:rgb(180 83 9/var(--tw-bg-opacity,1))}.hover\:bg-brand-700:hover{--tw-bg-opacity:1;background-color:rgb(4 120 87/var(--tw-bg-opacity,1))}.hover\:bg-rose-100:hover{--tw-bg-opacity:1;background-color:rgb(255 228 230/var(--tw-bg-opacity,1))}.hover\:bg-slate-100:hover{--tw-bg-opacity:1;background-color:rgb(241 245 249/var(--tw-bg-opacity,1))}.hover\:bg-slate-200:hover{--tw-bg-opacity:1;background-color:rgb(226 232 240/var(--tw-bg-opacity,1))}.hover\:bg-slate-50\/50:hover{background-color:rgba(248,250,252,.5)}.hover\:bg-slate-800:hover{--tw-bg-opacity:1;background-color:rgb(30 41 59/var(--tw-bg-opacity,1))}.hover\:text-rose-600:hover{--tw-text-opacity:1;color:rgb(225 29 72/var(--tw-text-opacity,1))}.hover\:text-slate-600:hover{--tw-text-opacity:1;color:rgb(71 85 105/var(--tw-text-opacity,1))}.hover\:shadow-md:hover{--tw-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color),0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.focus\:border-brand-500:focus{--tw-border-opacity:1;border-color:rgb(16 185 129/var(--tw-border-opacity,1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.disabled\:opacity-60:disabled{opacity:.6}.dark\:divide-slate-700\/50:is(.dark *)>:not([hidden])~:not([hidden]){border-color:rgba(51,65,85,.5)}.dark\:border-amber-800:is(.dark *){--tw-border-opacity:1;border-color:rgb(146 64 14/var(--tw-border-opacity,1))}.dark\:border-slate-600:is(.dark *){--tw-border-opacity:1;border-color:rgb(71 85 105/var(--tw-border-opacity,1))}.dark\:border-slate-700:is(.dark *){--tw-border-opacity:1;border-color:rgb(51 65 85/var(--tw-border-opacity,1))}.dark\:border-slate-800:is(.dark *){--tw-border-opacity:1;border-color:rgb(30 41 59/var(--tw-border-opacity,1))}.dark\:bg-amber-900\/20:is(.dark *){background-color:rgba(120,53,15,.2)}.dark\:bg-emerald-900\/30:is(.dark *){background-color:rgba(6,78,59,.3)}.dark\:bg-emerald-900\/40:is(.dark *){background-color:rgba(6,78,59,.4)}.dark\:bg-rose-900\/30:is(.dark *){background-color:rgba(136,19,55,.3)}.dark\:bg-slate-700:is(.dark *){--tw-bg-opacity:1;background-color:rgb(51 65 85/var(--tw-bg-opacity,1))}.dark\:bg-slate-800:is(.dark *){--tw-bg-opacity:1;background-color:rgb(30 41 59/var(--tw-bg-opacity,1))}.dark\:bg-slate-800\/50:is(.dark *){background-color:rgba(30,41,59,.5)}.dark\:bg-slate-900:is(.dark *){--tw-bg-opacity:1;background-color:rgb(15 23 42/var(--tw-bg-opacity,1))}.dark\:text-amber-300:is(.dark *){--tw-text-opacity:1;color:rgb(252 211 77/var(--tw-text-opacity,1))}.dark\:text-emerald-300:is(.dark *){--tw-text-opacity:1;color:rgb(110 231 183/var(--tw-text-opacity,1))}.dark\:text-rose-300:is(.dark *){--tw-text-opacity:1;color:rgb(253 164 175/var(--tw-text-opacity,1))}.dark\:text-rose-400:is(.dark *){--tw-text-opacity:1;color:rgb(251 113 133/var(--tw-text-opacity,1))}.dark\:text-slate-100:is(.dark *){--tw-text-opacity:1;color:rgb(241 245 249/var(--tw-text-opacity,1))}.dark\:text-slate-300:is(.dark *){--tw-text-opacity:1;color:rgb(203 213 225/var(--tw-text-opacity,1))}.dark\:text-slate-400:is(.dark *){--tw-text-opacity:1;color:rgb(148 163 184/var(--tw-text-opacity,1))}.dark\:hover\:bg-slate-700:hover:is(.dark *){--tw-bg-opacity:1;background-color:rgb(51 65 85/var(--tw-bg-opacity,1))}.dark\:hover\:bg-slate-700\/20:hover:is(.dark *){background-color:rgba(51,65,85,.2)}.dark\:hover\:text-slate-200:hover:is(.dark *){--tw-text-opacity:1;color:rgb(226 232 240/var(--tw-text-opacity,1))}@media (min-width:640px){.sm\:block{display:block}.sm\:inline-block{display:inline-block}.sm\:flex-row{flex-direction:row}.sm\:items-center{align-items:center}.sm\:p-8{padding:2rem}.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:text-5xl{font-size:3rem;line-height:1}.sm\:text-lg{font-size:1.125rem;line-height:1.75rem}}@media (min-width:768px){.md\:w-64{width:16rem}.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.md\:flex-row{flex-direction:row}}@media (min-width:1024px){.lg\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.lg\:px-8{padding-left:2rem;padding-right:2rem}}
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-200 min-h-screen flex flex-col">
+
+    <!-- Toast Notification Container (acima dos modais) -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[60] flex flex-col gap-2 pointer-events-none" aria-live="polite"></div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app" class="flex-1 flex flex-col">
+
+        <!-- ================= NAVBAR ================= -->
+        <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <button type="button" data-action="navigate" data-target="home" class="flex items-center gap-3 cursor-pointer text-left" aria-label="Ir para a página inicial">
+                    <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-md shadow-brand-500/30">
+                        <i class="fa-solid fa-hospital text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg tracking-tight">Vita<span class="text-brand-600">Schedule</span></span>
+                        <span class="hidden sm:inline-block text-xs px-2 py-0.5 ml-2 bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 font-medium rounded-full">Clínica Médica</span>
+                    </div>
+                </button>
+
+                <div class="flex items-center gap-3">
+                    <!-- Theme Toggle -->
+                    <button type="button" data-action="toggle-theme" class="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition" title="Alternar Tema" aria-label="Alternar tema">
+                        <i id="theme-icon" class="fa-solid fa-moon"></i>
+                    </button>
+
+                    <!-- Dynamic Header Action Buttons -->
+                    <div id="header-actions" class="flex items-center gap-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ================= VIEW CONTAINER ================= -->
+        <main class="flex-1 flex flex-col">
+            <div id="view-container" class="flex-1 flex flex-col">
+                <!-- Views injected here -->
+            </div>
+        </main>
+
+    </div>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Login Modal -->
+    <div id="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-title" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 border border-slate-100 dark:border-slate-700 relative">
+            <button type="button" data-action="close-modal" data-modal="login-modal" aria-label="Fechar" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-brand-50 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
+                    <i class="fa-solid fa-user-doctor"></i>
+                </div>
+                <h3 id="login-title" class="text-xl font-bold">Acessar VitaSchedule</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Informe suas credenciais para continuar</p>
+            </div>
+
+            <form id="login-form" data-submit="login" method="post" class="space-y-4">
+                <div>
+                    <label for="login-identifier" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">E-mail ou CPF</label>
+                    <input type="text" id="login-identifier" name="identifier" autocomplete="username" maxlength="254" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:border-brand-500 text-sm">
+                </div>
+                <div>
+                    <label for="login-password" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Senha</label>
+                    <input type="password" id="login-password" name="password" autocomplete="current-password" maxlength="128" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:border-brand-500 text-sm">
+                </div>
+
+                <!-- Somente em DEMO_MODE (ver script). Remover em produção. -->
+                <div id="login-demo-box" class="hidden p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 space-y-2">
+                    <label for="login-role-preset" class="block text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300">Modo demonstração: perfil (preenche o e-mail)</label>
+                    <select id="login-role-preset" data-change="fill-role" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:border-brand-500 text-sm">
+                        <option value="Patient">Paciente (Área do Paciente & Agendamento)</option>
+                        <option value="Reception">Recepção (Fila, Convênios & Agenda Geral)</option>
+                        <option value="Doctor">Médico(a) (Agenda, Prontuário & Bloqueio)</option>
+                        <option value="Admin">Administrador (Usuários, LGPD & Configurações)</option>
+                    </select>
+                    <p id="login-demo-hint" class="text-xs text-amber-700 dark:text-amber-300"></p>
+                </div>
+
+                <p id="login-error" role="alert" class="hidden text-xs font-medium text-rose-600 dark:text-rose-400"></p>
+
+                <button type="submit" id="login-submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl shadow-lg shadow-brand-500/30 transition duration-150 disabled:opacity-60">
+                    Entrar no Sistema
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Booking Modal (conteúdo montado por JS) -->
+    <div id="booking-modal" role="dialog" aria-modal="true" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 sm:p-8 border border-slate-100 dark:border-slate-700 relative max-h-[90vh] overflow-y-auto" id="booking-modal-content">
+            <!-- Dynamically Populated -->
+        </div>
+    </div>
+
+    <!-- Block Time Modal (Médico) -->
+    <div id="block-time-modal" role="dialog" aria-modal="true" aria-labelledby="block-title" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 border border-slate-100 dark:border-slate-700 relative">
+            <button type="button" data-action="close-modal" data-modal="block-time-modal" aria-label="Fechar" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div class="mb-6">
+                <h3 id="block-title" class="text-xl font-bold">Bloquear Horário / Férias</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Impedir novos agendamentos no período selecionado</p>
+            </div>
+            <form id="block-form" data-submit="block-time" method="post" class="space-y-4">
+                <div>
+                    <label for="block-doctor" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Profissional</label>
+                    <select id="block-doctor" name="doctor" class="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="block-date-start" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Data Início</label>
+                        <input type="date" id="block-date-start" name="start" required class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm">
+                    </div>
+                    <div>
+                        <label for="block-date-end" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Data Fim</label>
+                        <input type="date" id="block-date-end" name="end" required class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label for="block-reason" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Motivo</label>
+                    <input type="text" id="block-reason" name="reason" placeholder="Ex: Congresso Médicos, Folga, Férias" required minlength="3" maxlength="120" class="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm">
+                </div>
+                <p id="block-error" role="alert" class="hidden text-xs font-medium text-rose-600 dark:text-rose-400"></p>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" data-action="close-modal" data-modal="block-time-modal" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium">Cancelar</button>
+                    <button type="submit" class="px-6 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-sm transition">Confirmar Bloqueio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom MessageBox / Confirm Modal (substitui alert/confirm nativos) -->
+    <div id="message-modal" role="dialog" aria-modal="true" aria-labelledby="msg-modal-title" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center border border-slate-100 dark:border-slate-700">
+            <div id="msg-modal-icon" class="w-12 h-12 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <h4 id="msg-modal-title" class="font-bold text-lg mb-1">Aviso</h4>
+            <p id="msg-modal-text" class="text-sm text-slate-500 dark:text-slate-400 mb-6 whitespace-pre-line">Mensagem detalhada aqui...</p>
+            <div class="flex gap-3">
+                <button type="button" id="msg-modal-cancel" data-action="msg-cancel" class="hidden flex-1 py-2.5 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold rounded-xl text-sm">Cancelar</button>
+                <button type="button" id="msg-modal-ok" data-action="msg-ok" class="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-sm">OK</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= JAVASCRIPT APPLICATION CORE ================= -->
+    <script>
+    (function () {
+        'use strict';
+
+        // Anti-clickjacking de reserva: hospedagens sem cabeçalhos HTTP (ex.: GitHub Pages) não aplicam
+        // frame-ancestors. Se a página estiver dentro de um <iframe> de outro site, não renderiza nada.
+        if (window.top !== window.self) {
+            document.body.replaceChildren();
+            return;
+        }
+
+        // =====================================================================
+        // AVISO IMPORTANTE: este arquivo é um PROTÓTIPO 100% no navegador.
+        // Qualquer verificação feita aqui (login, perfis, regras) pode ser
+        // contornada por quem controla o navegador. Em produção, autenticação,
+        // autorização, validação, limitação de tentativas, criptografia dos
+        // dados de saúde e trilha de auditoria DEVEM ser feitas no servidor.
+        // =====================================================================
+
+        // ---------------------------------------------------------------
+        // Configuração
+        // ---------------------------------------------------------------
+        const DEMO_MODE = true;                      // Em produção: false (e autenticar no servidor)
+        const DEMO_PASSWORD_HINT = 'Vita#Demo2026';  // Exibido apenas em DEMO_MODE
+        const IDLE_TIMEOUT_MS = 15 * 60 * 1000;      // Logout automático por inatividade
+        const PBKDF2_ITERATIONS = 100000;
+        const DUMMY_SALT = '1cd89c1012246da088dfa2c234f1ce6c'; // Usado p/ equalizar o tempo quando o usuário não existe
+
+        const ROLE_LABEL = { Patient: 'Paciente', Reception: 'Recepção', Doctor: 'Médico(a)', Admin: 'Administrador' };
+        const PORTAL_LABEL = { Patient: 'Área do Paciente', Reception: 'Painel Recepção', Doctor: 'Portal Médico', Admin: 'Painel Admin' };
+        const TAB_BY_ROLE = { Patient: 'patient-dashboard', Reception: 'reception-dashboard', Doctor: 'doctor-dashboard', Admin: 'admin-dashboard' };
+        const DEMO_EMAIL_BY_ROLE = { Patient: 'paciente@vitamed.com', Reception: 'recepcao@vitamed.com', Doctor: 'mariana.souza@vitamed.com', Admin: 'admin@vitamed.com' };
+        const PUBLIC_TABS = new Set(['home']);
+
+        const STATUSES = ['Confirmado', 'Aguardando', 'Em atendimento', 'Finalizado', 'Faltou', 'Cancelado'];
+        const INACTIVE_STATUSES = new Set(['Cancelado', 'Faltou']);   // não ocupam o horário
+        const CANCELLABLE_STATUSES = new Set(['Confirmado', 'Aguardando']);
+
+        const SLOTS = [
+            { value: '09:00', label: '09:00 - 09:30' },
+            { value: '10:15', label: '10:15 - 10:45' },
+            { value: '14:00', label: '14:00 - 14:30' },
+            { value: '16:30', label: '16:30 - 17:00' }
+        ];
+
+        const MODALS = new Set(['login-modal', 'booking-modal', 'block-time-modal', 'message-modal']);
+        const ICONS = new Set(['fa-circle-info', 'fa-circle-check', 'fa-calendar-days', 'fa-file-medical', 'fa-key', 'fa-triangle-exclamation']);
+
+        const PROTOCOL_RE = /^VIT-[A-Z0-9]{4,8}$/;
+        const NAME_RE = /^\p{L}[\p{L}\p{M} .'’-]{2,99}$/u;
+
+        // ---------------------------------------------------------------
+        // Utilitários
+        // ---------------------------------------------------------------
+        const $ = (id) => document.getElementById(id);
+
+        // Escapa texto para uso em HTML (conteúdo e atributos SEMPRE entre aspas).
+        // Nunca use esta função para dados que vão dentro de JavaScript, URL ou CSS.
+        const ESC_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' };
+        function esc(value) {
+            return String(value ?? '').replace(/[&<>"'`]/g, (c) => ESC_MAP[c]);
+        }
+
+        const onlyDigits = (s) => String(s ?? '').replace(/\D/g, '');
+
+        function formatCPF(value) {
+            const d = onlyDigits(value).slice(0, 11);
+            if (d.length <= 3) return d;
+            if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+            if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+            return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+        }
+
+        // Minimização de dados (LGPD): exibe apenas parte do CPF/nome onde o dado completo não é necessário.
+        function maskCPF(cpf) {
+            const d = onlyDigits(cpf);
+            return d.length === 11 ? `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**` : '***';
+        }
+
+        function maskName(name) {
+            const parts = String(name ?? '').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return '';
+            return [parts[0], ...parts.slice(1).map((p) => p[0].toUpperCase() + '.')].join(' ');
+        }
+
+        function isValidCPF(cpf) {
+            const d = onlyDigits(cpf);
+            if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+            const check = (len) => {
+                let sum = 0;
+                for (let i = 0; i < len; i++) sum += Number(d[i]) * (len + 1 - i);
+                const r = (sum * 10) % 11;
+                return r === 10 ? 0 : r;
+            };
+            return check(9) === Number(d[9]) && check(10) === Number(d[10]);
+        }
+
+        function todayISO() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+        function addDaysISO(iso, days) {
+            const [y, m, d] = iso.split('-').map(Number);
+            return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+        }
+        function daysBetween(a, b) {
+            const [y1, m1, d1] = a.split('-').map(Number);
+            const [y2, m2, d2] = b.split('-').map(Number);
+            return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
+        }
+        function isValidISODate(s) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+            const [y, m, d] = s.split('-').map(Number);
+            const dt = new Date(Date.UTC(y, m - 1, d));
+            return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+        }
+
+        // Protocolo imprevisível (CSPRNG), 8 caracteres de um alfabeto de 32 símbolos sem ambiguidade (sem 0/O/1/I).
+        const PROTOCOL_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 símbolos -> 256 % 32 === 0, sem viés
+        function newProtocol() {
+            const bytes = new Uint8Array(8);
+            crypto.getRandomValues(bytes);
+            let out = '';
+            for (const b of bytes) out += PROTOCOL_ALPHABET[b % 32];
+            return 'VIT-' + out;
+        }
+
+        // Limitador de tentativas (apenas dissuasão no cliente; o limite real deve existir no servidor).
+        function makeThrottle(maxFails, windowMs, lockMs) {
+            let fails = [];
+            let lockedUntil = 0;
+            return {
+                secondsLeft() {
+                    const left = lockedUntil - Date.now();
+                    return left > 0 ? Math.ceil(left / 1000) : 0;
+                },
+                fail() {
+                    const now = Date.now();
+                    fails = fails.filter((t) => now - t < windowMs);
+                    fails.push(now);
+                    if (fails.length >= maxFails) { lockedUntil = now + lockMs; fails = []; }
+                },
+                reset() { fails = []; }
+            };
+        }
+        const loginThrottle = makeThrottle(5, 5 * 60 * 1000, 60 * 1000);
+        const lookupThrottle = makeThrottle(5, 5 * 60 * 1000, 60 * 1000);
+
+        // ---------------------------------------------------------------
+        // Senhas (PBKDF2-SHA256 via Web Crypto) - somente para a demonstração
+        // ---------------------------------------------------------------
+        function hexToBytes(hex) {
+            const out = new Uint8Array(hex.length / 2);
+            for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.substr(i * 2, 2), 16);
+            return out;
+        }
+        function bytesToHex(buf) {
+            return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
+        }
+        async function pbkdf2Hex(password, saltHex) {
+            const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+            const bits = await crypto.subtle.deriveBits(
+                { name: 'PBKDF2', salt: hexToBytes(saltHex), iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' }, key, 256);
+            return bytesToHex(bits);
+        }
+        function safeEqual(a, b) { // comparação em tempo constante
+            if (a.length !== b.length) return false;
+            let r = 0;
+            for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+            return r === 0;
+        }
+
+        // ---------------------------------------------------------------
+        // Estado da aplicação (dentro de closure: não fica exposto em window)
+        // ---------------------------------------------------------------
+        const state = {
+            currentUser: null,      // cópia imutável, sem segredos; null = visitante
+            currentTab: 'home',
+            doctors: [
+                { id: 1, name: 'Dra. Mariana Souza', specialty: 'Cardiologia', rating: '4.9 (124 avaliações)', avatar: 'MS', insurance: ['Unimed', 'Bradesco Saúde', 'Particular'], nextSlot: 'Hoje, 14:00' },
+                { id: 2, name: 'Dr. Carlos Eduardo', specialty: 'Ortopedia', rating: '4.8 (98 avaliações)', avatar: 'CE', insurance: ['SulAmérica', 'Unimed', 'Particular'], nextSlot: 'Amanhã, 09:30' },
+                { id: 3, name: 'Dra. Juliana Mendes', specialty: 'Dermatologia', rating: '5.0 (215 avaliações)', avatar: 'JM', insurance: ['Particular', 'Amil'], nextSlot: 'Hoje, 16:30' },
+                { id: 4, name: 'Dr. Roberto Alves', specialty: 'Pediatria', rating: '4.9 (160 avaliações)', avatar: 'RA', insurance: ['Unimed', 'Amil', 'Bradesco Saúde', 'Particular'], nextSlot: 'Quinta, 10:00' },
+                { id: 5, name: 'Dra. Fernanda Lima', specialty: 'Ginecologia', rating: '4.9 (189 avaliações)', avatar: 'FL', insurance: ['SulAmérica', 'Particular'], nextSlot: 'Sexta, 11:15' }
+            ],
+            // ownerId = id do usuário (paciente) dono do agendamento; null = agendado sem conta
+            appointments: [
+                { id: 'VIT-8092', ownerId: 1, patientName: 'Ana Beatriz Silva', patientCPF: '123.456.789-09', doctorName: 'Dra. Mariana Souza', specialty: 'Cardiologia', date: '2026-06-10', time: '14:00', status: 'Aguardando', insurance: 'Unimed', authorizationStatus: 'Autorizado', type: 'Consulta Presencial' },
+                { id: 'VIT-8091', ownerId: null, patientName: 'Lucas Ferreira', patientCPF: '987.654.321-00', doctorName: 'Dr. Carlos Eduardo', specialty: 'Ortopedia', date: '2026-06-10', time: '15:15', status: 'Em atendimento', insurance: 'Particular', authorizationStatus: 'N/A (Particular)', type: 'Retorno' },
+                { id: 'VIT-8090', ownerId: null, patientName: 'Camila Rocha', patientCPF: '456.123.789-55', doctorName: 'Dra. Juliana Mendes', specialty: 'Dermatologia', date: '2026-06-09', time: '10:30', status: 'Finalizado', insurance: 'Amil', authorizationStatus: 'Pendente Guia', type: 'Consulta Presencial' },
+                { id: 'VIT-8089', ownerId: null, patientName: 'João Pedro Santos', patientCPF: '789.321.654-91', doctorName: 'Dr. Roberto Alves', specialty: 'Pediatria', date: '2026-06-11', time: '09:00', status: 'Confirmado', insurance: 'Unimed', authorizationStatus: 'Autorizado', type: 'Primeira Vez' }
+            ],
+            patientsCRM: [
+                { name: 'Ana Beatriz Silva', cpf: '123.456.789-09', phone: '(11) 98765-4321', insurance: 'Unimed (Carteirinha #49821)', notes: 'Alérgica a dipirona. Histórico de hipertensão leve.' },
+                { name: 'Lucas Ferreira', cpf: '987.654.321-00', phone: '(11) 97123-8899', insurance: 'Particular', notes: 'Atleta amador. Lesão prévia no joelho direito.' },
+                { name: 'Camila Rocha', cpf: '456.123.789-55', phone: '(11) 99332-1144', insurance: 'Amil (Carteirinha #77210)', notes: 'Pele sensível. Tratamento contínuo com protetor solar fator 60.' }
+            ],
+            // Credenciais DEMO: PBKDF2-SHA256 com salt individual. Em produção isto não existe no front-end.
+            users: [
+                { id: 1, name: 'Ana Beatriz Silva', email: 'paciente@vitamed.com', role: 'Patient', cpf: '123.456.789-09', twoFactor: true,
+                  salt: '4da8ecc2bb33d27670385d061ed861a1', hash: 'fd8fe228138e3cc1a51ee05b057ba307e4412c76cb110f17646918cf2dd25271' },
+                { id: 2, name: 'Carla Recepção', email: 'recepcao@vitamed.com', role: 'Reception', twoFactor: false,
+                  salt: '919ce3e5e5da28e1e54511a3966d4fd7', hash: 'd5ffa84de9aadf8c3ca1049ad26415339313c45fe2f02170e95f8cc8a44bf476' },
+                { id: 3, name: 'Dra. Mariana Souza', email: 'mariana.souza@vitamed.com', role: 'Doctor', doctorName: 'Dra. Mariana Souza', twoFactor: true,
+                  salt: 'ee20ba315b943756615d8d12f8623048', hash: 'd474d5a8a0543f8725eeaa1c7ce196617268bc96b361f25e07ea80921e575579' },
+                { id: 4, name: 'Admin Gestão', email: 'admin@vitamed.com', role: 'Admin', twoFactor: true,
+                  salt: '6ccad0d0ae8bb6df818ac6b1f0299253', hash: 'f14873d0b328ad6f708a0de9f4e81b49401581f99f94ad362dc8a9bc409ab537' }
+            ],
+            blockedSlots: [
+                { doctor: 'Dra. Mariana Souza', start: '2026-06-15', end: '2026-06-18', reason: 'Congresso de Cardiologia' }
+            ],
+            auditLog: []
+        };
+
+        let lastActivity = Date.now();
+        let pendingConfirm = null;
+
+        // ---------------------------------------------------------------
+        // Auditoria (LGPD: registro de acessos a dados pessoais). Em memória, apenas demonstrativo.
+        // Não registre dados digitados pelo usuário (nome, CPF, texto livre) neste log.
+        // ---------------------------------------------------------------
+        function audit(action, detail) {
+            state.auditLog.unshift({
+                ts: new Date().toISOString(),
+                user: state.currentUser ? state.currentUser.email : 'anônimo',
+                action,
+                detail: detail || ''
+            });
+            if (state.auditLog.length > 200) state.auditLog.length = 200;
+        }
+
+        // ---------------------------------------------------------------
+        // Autorização
+        // ---------------------------------------------------------------
+        function canAccess(tab) {
+            if (PUBLIC_TABS.has(tab)) return true;
+            const u = state.currentUser;
+            return !!u && TAB_BY_ROLE[u.role] === tab;
+        }
+
+        // Destino seguro quando a aba pedida não é permitida: o painel do próprio perfil (ou a home, se visitante).
+        function defaultTab() {
+            const u = state.currentUser;
+            return u ? TAB_BY_ROLE[u.role] : 'home';
+        }
+
+        // Toda ação privilegiada confere o perfil da SESSÃO (nunca um valor vindo de formulário/DOM).
+        function requireRole(...roles) {
+            const u = state.currentUser;
+            if (!u || !roles.includes(u.role)) {
+                audit('Acesso negado', 'ação restrita');
+                showToast('Acesso negado: você não tem permissão para esta ação.', 'error');
+                return null;
+            }
+            return u;
+        }
+
+        // ---------------------------------------------------------------
+        // Tema
+        // ---------------------------------------------------------------
+        function readTheme() {
+            try { return localStorage.getItem('vitamed_theme') === 'dark' ? 'dark' : 'light'; }
+            catch (_) { return 'light'; }
+        }
+        function applyTheme(theme) {
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+            $('theme-icon').className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        }
+        function toggleTheme() {
+            const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+            try { localStorage.setItem('vitamed_theme', next); } catch (_) { /* storage indisponível */ }
+            applyTheme(next);
+        }
+
+        // ---------------------------------------------------------------
+        // Toasts e modais (sempre via textContent - nunca innerHTML com mensagem)
+        // ---------------------------------------------------------------
+        function showToast(message, type = 'success') {
+            const container = $('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-emerald-600 text-white' : type === 'error' ? 'bg-rose-600 text-white' : 'bg-slate-800 text-white';
+            const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info';
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl font-medium text-sm transition-all duration-300 transform translate-y-2 opacity-0 ${bgClass}`;
+            const i = document.createElement('i');
+            i.className = `fa-solid ${icon} text-lg`;
+            const span = document.createElement('span');
+            span.textContent = String(message);
+            toast.append(i, span);
+
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function setMessage(title, text, iconClass) {
+            $('msg-modal-title').textContent = title;
+            $('msg-modal-text').textContent = text;
+            const icon = document.createElement('i');
+            icon.className = 'fa-solid ' + (ICONS.has(iconClass) ? iconClass : 'fa-circle-info');
+            $('msg-modal-icon').replaceChildren(icon);
+        }
+        function showMessageBox(title, text, iconClass = 'fa-circle-info') {
+            pendingConfirm = null;
+            $('msg-modal-cancel').classList.add('hidden');
+            setMessage(title, text, iconClass);
+            openModal('message-modal');
+        }
+        function showConfirm(title, text, onConfirm, iconClass = 'fa-triangle-exclamation') {
+            setMessage(title, text, iconClass);
+            pendingConfirm = onConfirm;
+            $('msg-modal-cancel').classList.remove('hidden');
+            openModal('message-modal');
+        }
+
+        function openModal(id) { if (MODALS.has(id)) $(id).classList.remove('hidden'); }
+        function closeModal(id) {
+            if (!MODALS.has(id)) return;
+            $(id).classList.add('hidden');
+            if (id === 'message-modal') pendingConfirm = null;
+            if (id === 'login-modal') resetLoginForm();
+        }
+        function closeAllModals() { MODALS.forEach(closeModal); }
+
+        function showFormError(box, message) { box.textContent = message; box.classList.remove('hidden'); }
+        function clearFormError(box) { box.textContent = ''; box.classList.add('hidden'); }
+
+        // ---------------------------------------------------------------
+        // Autenticação
+        // ---------------------------------------------------------------
+        function fillRolePreset(role) {
+            if (Object.hasOwn(DEMO_EMAIL_BY_ROLE, role)) $('login-identifier').value = DEMO_EMAIL_BY_ROLE[role];
+        }
+        function resetLoginForm() {
+            $('login-form').reset();
+            clearFormError($('login-error'));
+        }
+        function openLoginModal() {
+            resetLoginForm();
+            $('login-demo-box').classList.toggle('hidden', !DEMO_MODE);
+            if (DEMO_MODE) {
+                $('login-demo-hint').textContent = `Senha das contas de demonstração: ${DEMO_PASSWORD_HINT}`;
+                fillRolePreset($('login-role-preset').value);
+            }
+            openModal('login-modal');
+            $('login-password').focus();
+        }
+
+        let loginInFlight = false;
+        async function handleLogin(form) {
+            if (loginInFlight) return;
+            const errBox = $('login-error');
+            clearFormError(errBox);
+
+            const wait = loginThrottle.secondsLeft();
+            if (wait) return showFormError(errBox, `Muitas tentativas. Tente novamente em ${wait}s.`);
+
+            const identifier = String(form.elements['identifier'].value).trim().toLowerCase().slice(0, 254);
+            const password = String(form.elements['password'].value).slice(0, 128);
+            form.elements['password'].value = ''; // nunca mantém a senha no DOM
+            if (!identifier || !password) return showFormError(errBox, 'Informe e-mail/CPF e senha.');
+            if (!(window.crypto && window.crypto.subtle)) {
+                return showFormError(errBox, 'Ambiente sem suporte a criptografia. Abra a página via HTTPS ou localhost.');
+            }
+
+            loginInFlight = true;
+            $('login-submit').disabled = true;
+            try {
+                const idDigits = onlyDigits(identifier);
+                const user = state.users.find((u) =>
+                    u.email.toLowerCase() === identifier || (idDigits.length === 11 && u.cpf && onlyDigits(u.cpf) === idDigits));
+
+                // Sempre calcula o hash (mesmo sem usuário) para não revelar, pelo tempo, se a conta existe.
+                const hash = await pbkdf2Hex(password, user ? user.salt : DUMMY_SALT);
+                const ok = !!user && safeEqual(hash, user.hash);
+
+                if (!ok) {
+                    loginThrottle.fail();
+                    audit('Login falhou', user ? user.email : 'identificador desconhecido');
+                    return showFormError(errBox, 'Credenciais inválidas.'); // mensagem única: não enumera contas
+                }
+                loginThrottle.reset();
+                startSession(user);
+            } catch (_) {
+                showFormError(errBox, 'Não foi possível concluir o login. Tente novamente.');
+            } finally {
+                loginInFlight = false;
+                $('login-submit').disabled = false;
+            }
+        }
+
+        function startSession(user) {
+            // O perfil vem do REGISTRO do usuário (nunca de um campo do formulário). Cópia imutável, sem salt/hash.
+            state.currentUser = Object.freeze({
+                id: user.id, name: user.name, email: user.email, role: user.role,
+                cpf: user.cpf || null, doctorName: user.doctorName || null
+            });
+            lastActivity = Date.now();
+            audit('Login', ROLE_LABEL[user.role]);
+            closeAllModals();
+            showToast(`Bem-vindo(a), ${user.name} (${ROLE_LABEL[user.role]})!`, 'success');
+            router.navigate(TAB_BY_ROLE[user.role]);
+        }
+
+        function logout(message) {
+            if (!state.currentUser) return;
+            audit('Logout', '');
+            state.currentUser = null;
+            closeAllModals();
+            $('booking-modal-content').replaceChildren(); // remove dados do DOM
+            showToast(message || 'Sessão encerrada com sucesso.', 'info');
+            router.navigate('home');
+        }
+
+        // ---------------------------------------------------------------
+        // Roteamento
+        // ---------------------------------------------------------------
+        const router = {
+            navigate(tab) {
+                if (!canAccess(tab)) {
+                    if (!PUBLIC_TABS.has(tab)) showToast('Acesso negado. Entre com um perfil autorizado.', 'error');
+                    tab = defaultTab();
+                }
+                state.currentTab = tab;
+                render();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        };
+
+        // ---------------------------------------------------------------
+        // Agendamento
+        // ---------------------------------------------------------------
+        function isBlocked(doctorName, date) {
+            return state.blockedSlots.some((b) => b.doctor === doctorName && date >= b.start && date <= b.end);
+        }
+        function isSlotTaken(doctorName, date, time) {
+            return state.appointments.some((a) =>
+                a.doctorName === doctorName && a.date === date && a.time === time && !INACTIVE_STATUSES.has(a.status));
+        }
+
+        function insuranceOptionsHTML(doc) {
+            return doc.insurance.map((i) => `<option value="${esc(i)}">${esc(i)}</option>`).join('');
+        }
+
+        // doctorId === null  ->  recepção escolhe o profissional no próprio formulário
+        function openBookingModal(doctorId) {
+            const chooser = doctorId === null;
+            const doc = chooser ? state.doctors[0] : state.doctors.find((d) => d.id === doctorId);
+            if (!doc) return;
+
+            const u = state.currentUser;
+            const lockIdentity = !!u && u.role === 'Patient'; // paciente logado agenda SOMENTE para si
+            const today = todayISO();
+            const maxDate = addDaysISO(today, 365);
+            const inputCls = 'w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm';
+            const labelCls = 'block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1';
+
+            const headerHTML = chooser
+                ? `<div class="mb-5">
+                        <h3 id="book-title" class="text-lg font-bold">Novo Agendamento Presencial</h3>
+                        <p class="text-xs text-slate-500">Selecione o profissional e preencha os dados do paciente.</p>
+                   </div>`
+                : `<div class="mb-5 flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center">${esc(doc.avatar)}</div>
+                        <div>
+                            <h3 id="book-title" class="text-lg font-bold">${esc(doc.name)}</h3>
+                            <p class="text-xs text-brand-600 font-semibold">${esc(doc.specialty)}</p>
+                        </div>
+                   </div>`;
+
+            const doctorFieldHTML = chooser
+                ? `<div>
+                        <label class="${labelCls}" for="book-doctor">Profissional</label>
+                        <select id="book-doctor" name="doctorId" data-change="booking-doctor" class="${inputCls}">
+                            ${state.doctors.map((d) => `<option value="${Number(d.id)}">${esc(d.name)} - ${esc(d.specialty)}</option>`).join('')}
+                        </select>
+                   </div>`
+                : `<input type="hidden" name="doctorId" value="${Number(doc.id)}">`;
+
+            const identityHTML = lockIdentity
+                ? `<div>
+                        <label class="${labelCls}">Paciente</label>
+                        <input type="text" value="${esc(u.name)}" readonly class="${inputCls} opacity-80">
+                   </div>
+                   <div>
+                        <label class="${labelCls}">CPF</label>
+                        <input type="text" value="${esc(maskCPF(u.cpf))}" readonly class="${inputCls} opacity-80">
+                   </div>`
+                : `<div>
+                        <label class="${labelCls}" for="book-name">Nome Completo do Paciente</label>
+                        <input type="text" id="book-name" name="patientName" maxlength="100" autocomplete="off" required class="${inputCls}">
+                   </div>
+                   <div>
+                        <label class="${labelCls}" for="book-cpf">CPF (Validação)</label>
+                        <input type="text" id="book-cpf" name="cpf" data-mask="cpf" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="000.000.000-00" required class="${inputCls}">
+                   </div>`;
+
+            $('booking-modal-content').innerHTML = `
+                <button type="button" data-action="close-modal" data-modal="booking-modal" aria-label="Fechar" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+                ${headerHTML}
+                <form data-submit="confirm-booking" method="post" class="space-y-4">
+                    ${doctorFieldHTML}
+                    ${identityHTML}
+                    <div>
+                        <label class="${labelCls}" for="book-insurance">Convênio / Particular</label>
+                        <select id="book-insurance" name="insurance" class="${inputCls}">${insuranceOptionsHTML(doc)}</select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="${labelCls}" for="book-date">Data da Consulta</label>
+                            <input type="date" id="book-date" name="date" min="${esc(today)}" max="${esc(maxDate)}" required class="${inputCls}">
+                        </div>
+                        <div>
+                            <label class="${labelCls}" for="book-time">Horário Disponível</label>
+                            <select id="book-time" name="time" class="${inputCls}">
+                                ${SLOTS.map((s) => `<option value="${esc(s.value)}">${esc(s.label)}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <label class="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
+                        <input type="checkbox" name="consent" required class="mt-0.5">
+                        <span>Autorizo o tratamento dos dados pessoais e de saúde informados para fins de agendamento e atendimento, conforme a LGPD (Lei 13.709/2018).</span>
+                    </label>
+                    <div class="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-base"></i>
+                        <span>Chegar com 15 min de antecedência. Guarde o protocolo e o CPF do paciente para consultar o status.</span>
+                    </div>
+                    <p id="book-error" role="alert" class="hidden text-xs font-medium text-rose-600 dark:text-rose-400"></p>
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" data-action="close-modal" data-modal="booking-modal" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium">Cancelar</button>
+                        <button type="submit" class="px-6 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-sm transition shadow-md">Confirmar Agendamento</button>
+                    </div>
+                </form>
+            `;
+            openModal('booking-modal');
+        }
+
+        function handleBookingDoctorChange(select) {
+            const doc = state.doctors.find((d) => d.id === Number(select.value));
+            const form = select.form;
+            if (!doc || !form) return;
+            form.elements['insurance'].innerHTML = insuranceOptionsHTML(doc);
+        }
+
+        function handleConfirmBooking(form) {
+            const errBox = $('book-error');
+            clearFormError(errBox);
+            const fail = (msg) => showFormError(errBox, msg);
+
+            const fd = new FormData(form);
+            const doc = state.doctors.find((d) => d.id === Number(fd.get('doctorId')));
+            if (!doc) return fail('Profissional inválido.');
+
+            // Identidade: paciente logado => vem da SESSÃO; caso contrário (visitante/recepção) => formulário validado.
+            const u = state.currentUser;
+            let patientName, cpf, ownerId = null;
+            if (u && u.role === 'Patient') {
+                patientName = u.name; cpf = u.cpf; ownerId = u.id;
+            } else {
+                patientName = String(fd.get('patientName') || '').trim().replace(/\s+/g, ' ');
+                cpf = String(fd.get('cpf') || '');
+            }
+            if (!NAME_RE.test(patientName)) return fail('Informe o nome completo (apenas letras, de 3 a 100 caracteres).');
+            if (!isValidCPF(cpf)) return fail('CPF inválido.');
+
+            const insurance = String(fd.get('insurance') || '');
+            if (!doc.insurance.includes(insurance)) return fail('Convênio não atendido por este profissional.');
+
+            const date = String(fd.get('date') || '');
+            const today = todayISO();
+            if (!isValidISODate(date)) return fail('Selecione uma data válida.');
+            if (date < today) return fail('A data da consulta não pode estar no passado.');
+            if (date > addDaysISO(today, 365)) return fail('Agendamentos são aceitos em até 12 meses.');
+
+            const time = String(fd.get('time') || '');
+            if (!SLOTS.some((s) => s.value === time)) return fail('Horário inválido.');
+
+            if (fd.get('consent') !== 'on') return fail('É necessário consentir com o tratamento de dados (LGPD).');
+
+            if (isBlocked(doc.name, date)) return fail('O profissional não atende nesta data (agenda bloqueada).');
+            if (isSlotTaken(doc.name, date, time)) return fail('Este horário já está ocupado. Escolha outro.');
+
+            let protocol;
+            do { protocol = newProtocol(); } while (state.appointments.some((a) => a.id === protocol));
+
+            state.appointments.unshift({
+                id: protocol,
+                ownerId,
+                patientName,
+                patientCPF: formatCPF(cpf),
+                doctorName: doc.name,
+                specialty: doc.specialty,
+                date,
+                time,
+                status: 'Confirmado',
+                insurance,
+                authorizationStatus: insurance === 'Particular' ? 'N/A (Particular)' : 'Pendente Guia',
+                type: 'Consulta Presencial',
+                consentAt: new Date().toISOString()
+            });
+            audit('Agendamento criado', protocol);
+            closeModal('booking-modal');
+            showMessageBox('Agendamento Realizado com Sucesso!',
+                `Sua consulta com ${doc.name} foi agendada.\n\nProtocolo: ${protocol}\nGuarde este código e o CPF do paciente para consultar o status.`, 'fa-circle-check');
+            render();
+        }
+
+        // ---------------------------------------------------------------
+        // Consulta pública de status (exige protocolo + CPF; retorna dados mínimos)
+        // ---------------------------------------------------------------
+        function checkPublicStatus(form) {
+            const box = $('public-status-result');
+            const show = (html) => { box.innerHTML = html; box.classList.remove('hidden'); };
+            const errorHTML = (msg) => `<div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> ${esc(msg)}</div>`;
+
+            const wait = lookupThrottle.secondsLeft();
+            if (wait) return show(errorHTML(`Muitas tentativas. Tente novamente em ${wait}s.`));
+
+            const fd = new FormData(form);
+            const protocol = String(fd.get('protocol') || '').trim().toUpperCase().slice(0, 12);
+            const cpfDigits = onlyDigits(fd.get('cpf')).slice(0, 11);
+            if (!PROTOCOL_RE.test(protocol) || cpfDigits.length !== 11) {
+                return show(errorHTML('Informe um protocolo válido (ex: VIT-8092) e o CPF com 11 dígitos.'));
+            }
+
+            const appt = state.appointments.find((a) => a.id === protocol && onlyDigits(a.patientCPF) === cpfDigits);
+            if (!appt) {
+                lookupThrottle.fail();
+                // Mensagem genérica e sem eco da entrada: não revela se o protocolo ou o CPF existem.
+                return show(errorHTML('Nenhum agendamento encontrado para os dados informados.'));
+            }
+            lookupThrottle.reset();
+
+            show(`
+                <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-3 text-left">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-mono font-bold text-brand-600">${esc(appt.id)}</span>
+                            <h4 class="font-bold text-base mt-0.5">${esc(maskName(appt.patientName))}</h4>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">${esc(appt.status)}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-200 dark:border-slate-800">
+                        <div><span class="text-slate-400 block">Profissional</span><span class="font-medium">${esc(appt.doctorName)} (${esc(appt.specialty)})</span></div>
+                        <div><span class="text-slate-400 block">Data e Hora</span><span class="font-medium">${esc(appt.date)} às ${esc(appt.time)}</span></div>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Dados de convênio e identificação completa ficam disponíveis apenas na Área do Paciente.</p>
+                </div>
+            `);
+        }
+
+        // ================= RENDERING ENGINE =================
+
+        function render() {
+            if (!canAccess(state.currentTab)) state.currentTab = defaultTab();
+            renderHeaderActions();
+            const views = {
+                'home': renderPublicHome,
+                'patient-dashboard': renderPatientDashboard,
+                'reception-dashboard': renderReceptionDashboard,
+                'doctor-dashboard': renderDoctorDashboard,
+                'admin-dashboard': renderAdminDashboard
+            };
+            $('view-container').innerHTML = views[state.currentTab]();
+        }
+
+        function renderHeaderActions() {
+            const actions = $('header-actions');
+            const u = state.currentUser;
+            if (!u) {
+                actions.innerHTML = `
+                    <button type="button" data-action="open-login" class="flex items-center gap-2 px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-brand-500/20 transition">
+                        <i class="fa-solid fa-right-to-bracket"></i> Entrar / Painel
+                    </button>
+                `;
+            } else {
+                actions.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="hidden sm:block text-right">
+                            <div class="text-xs font-bold">${esc(u.name)}</div>
+                            <div class="text-[10px] text-brand-600 dark:text-brand-400 font-semibold">${esc(PORTAL_LABEL[u.role])}</div>
+                        </div>
+                        <button type="button" data-action="logout" class="p-2 text-slate-400 hover:text-rose-600 transition" title="Sair" aria-label="Sair">
+                            <i class="fa-solid fa-arrow-right-from-bracket text-lg"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // --- 1. Public Home View ---
+        function renderPublicHome() {
+            return `
+                <div class="flex-1 flex flex-col">
+                    <!-- Hero Section -->
+                    <div class="bg-gradient-to-b from-emerald-900 to-slate-900 text-white py-16 px-4 text-center relative overflow-hidden">
+                        <div class="max-w-4xl mx-auto space-y-4 relative z-10">
+                            <span class="px-3 py-1 bg-brand-500/20 text-brand-300 border border-brand-500/30 rounded-full text-xs font-semibold">
+                                <i class="fa-solid fa-shield-heart"></i> Saúde Conectada & Atendimento Humanizado
+                            </span>
+                            <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight">
+                                Agende sua Consulta com <span class="text-brand-400">Praticidade</span>
+                            </h1>
+                            <p class="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto">
+                                Encontre especialistas, verifique horários livres em tempo real, escolha seu convênio e agende em poucos cliques.
+                            </p>
+
+                            <!-- Search Filter Bar -->
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-2xl max-w-3xl mx-auto mt-8 flex flex-col sm:flex-row gap-3 text-slate-800 dark:text-slate-100">
+                                <div class="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <i class="fa-solid fa-stethoscope text-brand-600"></i>
+                                    <select id="filter-specialty" aria-label="Especialidade" class="w-full bg-transparent text-sm focus:outline-none">
+                                        <option value="">Todas as Especialidades</option>
+                                        <option value="Cardiologia">Cardiologia</option>
+                                        <option value="Ortopedia">Ortopedia</option>
+                                        <option value="Dermatologia">Dermatologia</option>
+                                        <option value="Pediatria">Pediatria</option>
+                                        <option value="Ginecologia">Ginecologia</option>
+                                    </select>
+                                </div>
+                                <div class="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <i class="fa-solid fa-file-shield text-brand-600"></i>
+                                    <select id="filter-insurance" aria-label="Convênio" class="w-full bg-transparent text-sm focus:outline-none">
+                                        <option value="">Convênio ou Particular</option>
+                                        <option value="Unimed">Unimed</option>
+                                        <option value="Bradesco Saúde">Bradesco Saúde</option>
+                                        <option value="SulAmérica">SulAmérica</option>
+                                        <option value="Amil">Amil</option>
+                                        <option value="Particular">Particular</option>
+                                    </select>
+                                </div>
+                                <button type="button" data-action="filter-doctors" class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl transition text-sm flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-magnifying-glass"></i> Buscar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Public Status Tracker Bar -->
+                    <div class="max-w-3xl mx-auto w-full px-4 -mt-6 relative z-20 mb-12">
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 border border-slate-200 dark:border-slate-700">
+                            <h3 class="font-bold text-base mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-ticket text-brand-600"></i> Consultar Status de Agendamento
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Informe o Protocolo (ex: VIT-8092) e o CPF do paciente para verificar o status sem login.</p>
+                            <form data-submit="public-status" method="post" class="flex flex-col sm:flex-row gap-2">
+                                <input type="text" name="protocol" placeholder="Protocolo (ex: VIT-8092)" aria-label="Protocolo" maxlength="12" autocomplete="off" required class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm focus:outline-none focus:border-brand-500 uppercase font-mono">
+                                <input type="text" name="cpf" data-mask="cpf" inputmode="numeric" placeholder="CPF (000.000.000-00)" aria-label="CPF do paciente" maxlength="14" autocomplete="off" required class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm focus:outline-none focus:border-brand-500 font-mono">
+                                <button type="submit" class="px-5 py-2.5 bg-slate-900 dark:bg-slate-700 text-white font-semibold text-sm rounded-xl hover:bg-slate-800 transition">Consultar</button>
+                            </form>
+                            <div id="public-status-result" role="status" class="mt-4 hidden"></div>
+                        </div>
+                    </div>
+
+                    <!-- Doctors Catalog Grid -->
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+                        <h2 class="text-2xl font-bold mb-6">Corpo Clínico Disponível</h2>
+                        <div id="doctors-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${state.doctors.map((doc) => `
+                                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition">
+                                    <div>
+                                        <div class="flex items-center gap-3 mb-4">
+                                            <div class="w-14 h-14 rounded-2xl bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 font-bold flex items-center justify-center text-lg shadow-inner">${esc(doc.avatar)}</div>
+                                            <div>
+                                                <h3 class="font-bold text-lg">${esc(doc.name)}</h3>
+                                                <div class="text-xs font-semibold text-brand-600 dark:text-brand-400">${esc(doc.specialty)}</div>
+                                                <div class="text-xs text-amber-500 mt-0.5"><i class="fa-solid fa-star"></i> ${esc(doc.rating)}</div>
+                                            </div>
+                                        </div>
+                                        <div class="text-xs text-slate-500 dark:text-slate-400 space-y-1 mb-4">
+                                            <div><strong class="text-slate-700 dark:text-slate-300">Convênios:</strong> ${esc(doc.insurance.join(', '))}</div>
+                                            <div><strong class="text-slate-700 dark:text-slate-300">Próxima Vaga:</strong> ${esc(doc.nextSlot)}</div>
+                                        </div>
+                                    </div>
+                                    <button type="button" data-action="book" data-doctor-id="${Number(doc.id)}" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-calendar-check"></i> Agendar Consulta
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- LGPD Footer Banner -->
+                    <div class="bg-slate-100 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 py-6 px-4 text-center mt-auto">
+                        <div class="max-w-4xl mx-auto text-xs text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row items-center justify-center gap-4">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-shield-halved text-brand-600 text-base"></i> <span>Tratamento de dados pessoais e de saúde conforme a LGPD</span></div>
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-lock text-brand-600 text-base"></i> <span>Consentimento solicitado a cada agendamento</span></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterDoctorsList() {
+            const spec = $('filter-specialty').value;
+            const ins = $('filter-insurance').value;
+            showToast(`Filtros aplicados: ${spec || 'Todas'} / ${ins || 'Todos'}`, 'info');
+        }
+
+        // --- 2. Patient Portal ---
+        function renderPatientDashboard() {
+            const u = state.currentUser;
+            const mine = state.appointments.filter((a) => a.ownerId === u.id); // só os agendamentos DESTE usuário
+            const initials = u.name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('');
+            return `
+                <div class="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto w-full p-6 gap-8">
+                    <aside class="w-full md:w-64 space-y-2">
+                        <div class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-center">
+                            <div class="w-16 h-16 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-xl mx-auto mb-2">${esc(initials)}</div>
+                            <h3 class="font-bold">${esc(u.name)}</h3>
+                            <p class="text-xs text-slate-400">CPF: ${esc(maskCPF(u.cpf))}</p>
+                            <span class="mt-2 inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-400">Paciente Verificado</span>
+                        </div>
+                        <button type="button" data-action="navigate" data-target="home" class="w-full px-4 py-2.5 rounded-xl bg-brand-600 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md">
+                            <i class="fa-solid fa-plus"></i> Novo Agendamento
+                        </button>
+                    </aside>
+
+                    <div class="flex-1 space-y-6">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-2xl font-bold">Minhas Consultas e Histórico</h2>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="border-b border-slate-200 dark:border-slate-700 text-xs text-slate-400 uppercase">
+                                        <tr>
+                                            <th class="pb-3 font-semibold">Protocolo</th>
+                                            <th class="pb-3 font-semibold">Profissional</th>
+                                            <th class="pb-3 font-semibold">Data e Hora</th>
+                                            <th class="pb-3 font-semibold">Convênio</th>
+                                            <th class="pb-3 font-semibold">Status</th>
+                                            <th class="pb-3 font-semibold text-right">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                        ${mine.length === 0 ? `<tr><td colspan="6" class="py-6 text-center text-xs text-slate-400">Nenhuma consulta encontrada.</td></tr>` : ''}
+                                        ${mine.map((a) => `
+                                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/20">
+                                                <td class="py-3 font-mono font-bold text-brand-600 text-xs">${esc(a.id)}</td>
+                                                <td class="py-3 font-medium">${esc(a.doctorName)} <br><span class="text-xs text-slate-400">${esc(a.specialty)}</span></td>
+                                                <td class="py-3 text-xs">${esc(a.date)} às ${esc(a.time)}</td>
+                                                <td class="py-3 text-xs">${esc(a.insurance)}</td>
+                                                <td class="py-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-600">${esc(a.status)}</span></td>
+                                                <td class="py-3 text-right space-x-2">
+                                                    <button type="button" data-action="reschedule" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-semibold rounded-lg">Remarcar</button>
+                                                    ${CANCELLABLE_STATUSES.has(a.status)
+                                                        ? `<button type="button" data-action="cancel-appt" data-id="${esc(a.id)}" class="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-semibold rounded-lg">Cancelar</button>`
+                                                        : ''}
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function cancelAppointment(id) {
+            const u = requireRole('Patient');
+            if (!u) return;
+            const appt = state.appointments.find((a) => a.id === id);
+            // Verificação de propriedade (evita acesso a agendamentos de terceiros, mesmo conhecendo o protocolo)
+            if (!appt || appt.ownerId !== u.id) {
+                audit('Acesso negado', 'cancelamento de agendamento de terceiro');
+                return showToast('Agendamento não encontrado.', 'error');
+            }
+            if (!CANCELLABLE_STATUSES.has(appt.status)) return showToast('Este agendamento não pode mais ser cancelado.', 'error');
+            appt.status = 'Cancelado';
+            audit('Agendamento cancelado', appt.id);
+            showMessageBox('Consulta Cancelada', `A consulta ${appt.id} foi cancelada com sucesso.`, 'fa-circle-check');
+            render();
+        }
+
+        // --- 3. Reception Panel ---
+        function renderReceptionDashboard() {
+            return `
+                <div class="flex-1 flex flex-col max-w-7xl mx-auto w-full p-6 space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold">Painel da Recepção & Fila de Atendimento</h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Gerenciamento de agenda multiprofissional, guias de convênio e status de pacientes na clínica.</p>
+                        </div>
+                        <button type="button" data-action="book-new" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs rounded-xl shadow-md transition flex items-center gap-2 w-fit">
+                            <i class="fa-solid fa-plus"></i> Novo Agendamento Presencial
+                        </button>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg">Agenda de Hoje & Fluxo de Pacientes</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="border-b border-slate-200 dark:border-slate-700 text-xs text-slate-400 uppercase">
+                                    <tr>
+                                        <th class="pb-3 font-semibold">Protocolo</th>
+                                        <th class="pb-3 font-semibold">Paciente (CRM)</th>
+                                        <th class="pb-3 font-semibold">Profissional</th>
+                                        <th class="pb-3 font-semibold">Horário</th>
+                                        <th class="pb-3 font-semibold">Convênio / Guia</th>
+                                        <th class="pb-3 font-semibold">Status na Recepção</th>
+                                        <th class="pb-3 font-semibold text-right">Alterar Fluxo</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                    ${state.appointments.map((a) => `
+                                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/20">
+                                            <td class="py-3 font-mono font-bold text-brand-600 text-xs">${esc(a.id)}</td>
+                                            <td class="py-3 font-medium">${esc(a.patientName)} <br><span class="text-xs text-slate-400">${esc(maskCPF(a.patientCPF))}</span></td>
+                                            <td class="py-3 text-xs font-semibold">${esc(a.doctorName)}</td>
+                                            <td class="py-3 text-xs">${esc(a.date)} ${esc(a.time)}</td>
+                                            <td class="py-3 text-xs">${esc(a.insurance)} <br><span class="text-[10px] text-amber-600">${esc(a.authorizationStatus)}</span></td>
+                                            <td class="py-3"><span class="px-2.5 py-1 rounded text-xs font-semibold bg-brand-50 text-brand-600">${esc(a.status)}</span></td>
+                                            <td class="py-3 text-right">
+                                                <select data-change="update-status" data-id="${esc(a.id)}" aria-label="Alterar status de ${esc(a.id)}" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-xs font-semibold">
+                                                    ${STATUSES.map((s) => `<option value="${esc(s)}" ${a.status === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateAppointmentStatus(id, newStatus) {
+            if (!requireRole('Reception')) return render(); // re-render restaura o valor do select
+            if (!STATUSES.includes(newStatus)) return render();
+            const appt = state.appointments.find((a) => a.id === id);
+            if (!appt) return render();
+            appt.status = newStatus;
+            audit('Status alterado', `${appt.id} -> ${newStatus}`);
+            showToast(`Agendamento ${appt.id} atualizado para: ${newStatus}`, 'success');
+            render();
+        }
+
+        // --- 4. Doctor Portal ---
+        function renderDoctorDashboard() {
+            const u = state.currentUser;
+            const mine = state.appointments.filter((a) => a.doctorName === u.doctorName); // só os pacientes DESTE médico
+            return `
+                <div class="flex-1 flex flex-col max-w-7xl mx-auto w-full p-6 space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold">Portal do Profissional (Médico)</h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">${esc(u.doctorName)} | Acesso rápido aos pacientes do dia e bloqueio de agenda.</p>
+                        </div>
+                        <button type="button" data-action="open-block" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-xl shadow-md transition flex items-center gap-2 w-fit">
+                            <i class="fa-solid fa-ban"></i> Bloquear Horário / Férias
+                        </button>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                        <h3 class="font-bold text-lg mb-4">Pacientes Agendados</h3>
+                        <div class="space-y-4">
+                            ${mine.length === 0 ? `<p class="text-xs text-slate-400">Nenhum paciente agendado.</p>` : ''}
+                            ${mine.map((a) => `
+                                <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-mono text-xs font-bold text-brand-600">${esc(a.id)}</span>
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-brand-50 text-brand-600">${esc(a.date)} ${esc(a.time)}</span>
+                                        </div>
+                                        <h4 class="font-bold text-base mt-1">${esc(a.patientName)}</h4>
+                                        <p class="text-xs text-slate-400">CPF: ${esc(maskCPF(a.patientCPF))} | Convênio: ${esc(a.insurance)}</p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" data-action="open-pep" data-id="${esc(a.id)}" class="px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl">Abrir PEP</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openPEP(id) {
+            const u = requireRole('Doctor');
+            if (!u) return;
+            const appt = state.appointments.find((a) => a.id === id);
+            // Só o médico responsável pelo agendamento pode abrir o prontuário do paciente
+            if (!appt || appt.doctorName !== u.doctorName) {
+                audit('Acesso negado', 'prontuário de paciente de outro profissional');
+                return showToast('Acesso negado ao prontuário.', 'error');
+            }
+            const rec = state.patientsCRM.find((p) => onlyDigits(p.cpf) === onlyDigits(appt.patientCPF));
+            audit('Acesso ao prontuário', appt.id);
+            const text = rec
+                ? `Paciente: ${rec.name}\nConvênio: ${rec.insurance}\n\nObservações clínicas:\n${rec.notes}`
+                : 'Nenhum registro clínico encontrado para este paciente.';
+            showMessageBox('Prontuário Eletrônico (PEP)', text, 'fa-file-medical');
+        }
+
+        function openBlockModal() {
+            const u = requireRole('Doctor');
+            if (!u) return;
+            const form = $('block-form');
+            form.reset();
+            clearFormError($('block-error'));
+            const sel = $('block-doctor');
+            sel.replaceChildren(new Option(u.doctorName, u.doctorName)); // médico só vê/bloqueia a própria agenda
+            const today = todayISO();
+            $('block-date-start').min = today;
+            $('block-date-end').min = today;
+            openModal('block-time-modal');
+        }
+
+        function handleBlockTime(form) {
+            const u = requireRole('Doctor');
+            if (!u) return;
+            const errBox = $('block-error');
+            clearFormError(errBox);
+            const fail = (msg) => showFormError(errBox, msg);
+
+            const fd = new FormData(form);
+            const doctor = String(fd.get('doctor') || '');
+            if (doctor !== u.doctorName) return fail('Você só pode bloquear a sua própria agenda.');
+
+            const start = String(fd.get('start') || '');
+            const end = String(fd.get('end') || '');
+            if (!isValidISODate(start) || !isValidISODate(end)) return fail('Datas inválidas.');
+            if (start < todayISO()) return fail('A data de início não pode estar no passado.');
+            if (end < start) return fail('A data final deve ser igual ou posterior à inicial.');
+            if (daysBetween(start, end) > 365) return fail('O bloqueio não pode ultrapassar 365 dias.');
+
+            const reason = String(fd.get('reason') || '').trim().replace(/\s+/g, ' ');
+            if (reason.length < 3 || reason.length > 120) return fail('Informe um motivo de 3 a 120 caracteres.');
+
+            state.blockedSlots.push({ doctor, start, end, reason });
+            audit('Agenda bloqueada', `${start} a ${end}`);
+            closeModal('block-time-modal');
+            showToast('Período bloqueado com sucesso na agenda.', 'success');
+        }
+
+        // --- 5. Admin Panel ---
+        function renderAdminDashboard() {
+            const u = state.currentUser;
+            return `
+                <div class="flex-1 flex flex-col max-w-7xl mx-auto w-full p-6 space-y-6">
+                    <div>
+                        <h2 class="text-2xl font-bold">Painel de Administração Geral</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Gestão de usuários, conformidade LGPD, auditoria e segurança.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total de Usuários</span>
+                            <div class="text-3xl font-extrabold mt-2">${state.users.length}</div>
+                            <div class="text-xs text-brand-600 mt-1">Pacientes, Médicos e Recepção</div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Consultas no Mês</span>
+                            <div class="text-3xl font-extrabold mt-2">${state.appointments.length + 142}</div>
+                            <div class="text-xs text-emerald-600 mt-1">+12% vs mês anterior</div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Status LGPD / Criptografia</span>
+                            <div class="text-xl font-extrabold text-amber-600 mt-2"><i class="fa-solid fa-triangle-exclamation"></i> Não verificado</div>
+                            <div class="text-xs text-slate-400 mt-1">Protótipo: dados em memória, sem criptografia em repouso</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                        <h3 class="font-bold text-lg mb-4">Gestão de Usuários e Credenciais</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="border-b border-slate-200 dark:border-slate-700 text-xs text-slate-400 uppercase">
+                                    <tr>
+                                        <th class="pb-3 font-semibold">Nome</th>
+                                        <th class="pb-3 font-semibold">E-mail</th>
+                                        <th class="pb-3 font-semibold">Perfil</th>
+                                        <th class="pb-3 font-semibold">2FA</th>
+                                        <th class="pb-3 font-semibold text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                    ${state.users.map((x) => `
+                                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/20">
+                                            <td class="py-3 font-medium">${esc(x.name)}</td>
+                                            <td class="py-3 text-slate-500 text-xs">${esc(x.email)}</td>
+                                            <td class="py-3"><span class="px-2 py-0.5 rounded text-xs font-semibold bg-brand-50 text-brand-600">${esc(ROLE_LABEL[x.role] || x.role)}</span></td>
+                                            <td class="py-3 text-xs">${x.twoFactor ? '<span class="text-emerald-600 font-semibold">Ativado</span>' : 'Desativado'}</td>
+                                            <td class="py-3 text-right space-x-2">
+                                                <button type="button" data-action="reset-password" data-user-id="${Number(x.id)}" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-xs font-semibold rounded-lg">Redefinir Senha</button>
+                                                ${x.id === u.id ? '' : `<button type="button" data-action="delete-user" data-user-id="${Number(x.id)}" aria-label="Remover usuário" class="px-2.5 py-1 bg-rose-50 text-rose-600 text-xs font-semibold rounded-lg"><i class="fa-solid fa-trash"></i></button>`}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                        <h3 class="font-bold text-lg mb-1">Trilha de Auditoria (sessão atual)</h3>
+                        <p class="text-xs text-slate-400 mb-4">Últimos 10 eventos. Em produção, o registro deve ser gravado no servidor, de forma imutável.</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="border-b border-slate-200 dark:border-slate-700 text-slate-400 uppercase">
+                                    <tr>
+                                        <th class="pb-2 font-semibold">Data/Hora</th>
+                                        <th class="pb-2 font-semibold">Usuário</th>
+                                        <th class="pb-2 font-semibold">Ação</th>
+                                        <th class="pb-2 font-semibold">Detalhe</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                    ${state.auditLog.length === 0 ? `<tr><td colspan="4" class="py-4 text-center text-slate-400">Nenhum evento registrado.</td></tr>` : ''}
+                                    ${state.auditLog.slice(0, 10).map((e) => `
+                                        <tr>
+                                            <td class="py-2 whitespace-nowrap">${esc(new Date(e.ts).toLocaleString('pt-BR'))}</td>
+                                            <td class="py-2">${esc(e.user)}</td>
+                                            <td class="py-2 font-semibold">${esc(e.action)}</td>
+                                            <td class="py-2">${esc(e.detail)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function resetUserPassword(userId) {
+            if (!requireRole('Admin')) return;
+            const target = state.users.find((x) => x.id === userId);
+            if (!target) return;
+            audit('Redefinição de senha solicitada', target.email);
+            showMessageBox('Senha Redefinida (simulação)', `Em produção, um e-mail de redefinição seria enviado para ${target.email}.`, 'fa-key');
+            render();
+        }
+
+        function deleteUser(userId) {
+            const me = requireRole('Admin');
+            if (!me) return;
+            const target = state.users.find((x) => x.id === userId);
+            if (!target) return;
+            if (target.id === me.id) return showToast('Você não pode remover a própria conta.', 'error');
+            if (target.role === 'Admin' && state.users.filter((x) => x.role === 'Admin').length <= 1) {
+                return showToast('Não é possível remover o último administrador.', 'error');
+            }
+            showConfirm('Remover usuário?', `A conta de ${target.email} será removida. Esta ação não pode ser desfeita.`, () => {
+                if (!requireRole('Admin')) return; // reconfere a permissão no momento da confirmação
+                const idx = state.users.findIndex((x) => x.id === userId);
+                if (idx === -1) return;
+                const removed = state.users.splice(idx, 1)[0];
+                audit('Usuário removido', removed.email);
+                showToast('Usuário removido com sucesso.', 'info');
+                render();
+            });
+        }
+
+        // ================= EVENTOS (delegação; sem handlers inline) =================
+
+        const actions = {
+            'navigate': (el) => router.navigate(el.dataset.target),
+            'toggle-theme': () => toggleTheme(),
+            'open-login': () => openLoginModal(),
+            'close-modal': (el) => closeModal(el.dataset.modal),
+            'logout': () => logout(),
+            'book': (el) => openBookingModal(Number(el.dataset.doctorId)),
+            'book-new': () => { if (requireRole('Reception')) openBookingModal(null); },
+            'filter-doctors': () => filterDoctorsList(),
+            'reschedule': () => showMessageBox('Reagendar Consulta', 'Entre em contato com a recepção ou cancele para remarcar.', 'fa-calendar-days'),
+            'cancel-appt': (el) => {
+                const id = el.dataset.id;
+                showConfirm('Cancelar consulta?', `Deseja cancelar a consulta ${id}?`, () => cancelAppointment(id));
+            },
+            'open-pep': (el) => openPEP(el.dataset.id),
+            'open-block': () => openBlockModal(),
+            'reset-password': (el) => resetUserPassword(Number(el.dataset.userId)),
+            'delete-user': (el) => deleteUser(Number(el.dataset.userId)),
+            'msg-ok': () => {
+                const cb = pendingConfirm;
+                pendingConfirm = null;
+                closeModal('message-modal');
+                if (typeof cb === 'function') cb();
+            },
+            'msg-cancel': () => closeModal('message-modal')
+        };
+
+        const submitHandlers = {
+            'login': (form) => { handleLogin(form); },
+            'confirm-booking': handleConfirmBooking,
+            'public-status': checkPublicStatus,
+            'block-time': handleBlockTime
+        };
+
+        const changeHandlers = {
+            'fill-role': (el) => fillRolePreset(el.value),
+            'booking-doctor': handleBookingDoctorChange,
+            'update-status': (el) => updateAppointmentStatus(el.dataset.id, el.value)
+        };
+
+        document.addEventListener('click', (e) => {
+            const el = e.target instanceof Element ? e.target.closest('[data-action]') : null;
+            if (!el) return;
+            const name = el.dataset.action;
+            if (Object.hasOwn(actions, name)) actions[name](el, e);
+        });
+
+        document.addEventListener('submit', (e) => {
+            e.preventDefault(); // nenhum formulário é enviado ao navegador/rede
+            const form = e.target;
+            const name = form && form.dataset ? form.dataset.submit : undefined;
+            if (name && Object.hasOwn(submitHandlers, name)) submitHandlers[name](form);
+        });
+
+        document.addEventListener('change', (e) => {
+            const el = e.target;
+            const name = el && el.dataset ? el.dataset.change : undefined;
+            if (name && Object.hasOwn(changeHandlers, name)) changeHandlers[name](el);
+        });
+
+        document.addEventListener('input', (e) => {
+            const el = e.target;
+            if (el && el.dataset && el.dataset.mask === 'cpf') el.value = formatCPF(el.value);
+        });
+
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAllModals(); });
+
+        // Inatividade: encerra a sessão para não deixar dados de pacientes expostos em tela.
+        ['click', 'keydown', 'pointerdown'].forEach((evt) =>
+            document.addEventListener(evt, () => { lastActivity = Date.now(); }, { passive: true, capture: true }));
+        setInterval(() => {
+            if (state.currentUser && Date.now() - lastActivity > IDLE_TIMEOUT_MS) {
+                logout('Sessão encerrada por inatividade.');
+            }
+        }, 15000);
+
+        // Inicialização
+        applyTheme(readTheme());
+        render();
+    })();
+    </script>
+</body>
+</html>

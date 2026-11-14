@@ -1,0 +1,18 @@
+# Dependências e temporários do build
+node_modules/
+build/.tmp/
+
+# Configuração local das ferramentas (não faz parte do projeto)
+.claude/
+
+# Backups e segredos: nunca versionar
+*.original.html
+.env
+.env.*
+*.pem
+*.key
+
+# Lixo de sistema/editor
+*.log
+.DS_Store
+Thumbs.db
