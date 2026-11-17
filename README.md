@@ -1,10 +1,10 @@
 # VitaSchedule
 
-Protótipo de sistema de agendamento e gestão de pacientes para clínicas: um único arquivo HTML, sem servidor.
+Sistema de agendamento e gestão de pacientes para clínicas: front em um único `index.html` + API FastAPI
+(`api/`) com Postgres e migrações Alembic. Login, perfis, regras e auditoria são validados **no servidor**.
 
-> **Aviso:** é uma demonstração que roda 100% no navegador, com dados fictícios. Login, perfis e regras
-> de acesso existem só no lado do cliente e **não protegem dados reais**. Não use com informações de
-> pacientes de verdade. Veja [SECURITY.md](SECURITY.md).
+> **Aviso:** os dados de demonstração são fictícios. Antes de usar com pacientes reais, leia o
+> checklist em [SECURITY.md](SECURITY.md).
 
 ## O que tem
 
@@ -15,13 +15,27 @@ Protótipo de sistema de agendamento e gestão de pacientes para clínicas: um �
 - **Consulta pública de status:** exige protocolo **e** CPF, e devolve apenas dados mínimos.
 - Tema claro/escuro e interface responsiva.
 
-## Como rodar
+## API, banco e deploy
 
-Abra o `index.html` no navegador (duplo clique). Não precisa instalar nada.
-Os ícones (Font Awesome) e a fonte (Google Fonts) vêm da internet; sem conexão a página funciona, só sem eles.
+```bash
+cd api
+python -m venv .venv && .venv/Scripts/pip install -r requirements-dev.txt   # Linux/Mac: .venv/bin/pip
+.venv/Scripts/alembic upgrade head                                          # cria as tabelas (SQLite local por padrão)
+SEED_DEMO=true .venv/Scripts/uvicorn app.main:app --reload                  # http://localhost:8000
+.venv/Scripts/python -m pytest                                              # testes
+```
+
+Variáveis: `DATABASE_URL` (Postgres em produção), `SECRET_KEY` (obrigatória com `APP_ENV=production`),
+`SEED_DEMO` (cria contas/dados fictícios se o banco estiver vazio), `DEMO_PASSWORD`.
+Nova migração: `alembic revision --autogenerate -m "descrição"`.
+
+Deploy: `render.yaml` (Render > New > Blueprint). A API serve o `index.html` na mesma origem, então o cookie
+de sessão é `HttpOnly; Secure; SameSite=Strict` e não há CORS.
+
+## Contas de demonstração
 
 Na tela de login (botão **Entrar**) há um seletor de perfil que preenche o e-mail da conta de demonstração e
-mostra a senha de demonstração. As contas são:
+mostra a senha de demonstração (`DEMO_PASSWORD`, padrão `Vita#Demo2026`). As contas são:
 
 | Perfil | E-mail |
 | --- | --- |
@@ -30,13 +44,14 @@ mostra a senha de demonstração. As contas são:
 | Médica | `mariana.souza@vitamed.com` |
 | Administrador | `admin@vitamed.com` |
 
-Para desligar a caixa de demonstração, mude `DEMO_MODE` para `false` no início do script e rode o build
-(veja [Desenvolvimento](#desenvolvimento)), porque o script tem hash na CSP.
+A caixa de demonstração e as contas só existem com `SEED_DEMO=true` no servidor. Para desligar, defina `SEED_DEMO=false`.
 
 ## Estrutura
 
 ```
-index.html      aplicação completa (HTML + CSS compilado + JavaScript)
+index.html      front (HTML + CSS compilado + JavaScript)
+api/            FastAPI + SQLAlchemy + Alembic (migrações em api/alembic)
+render.yaml     deploy no Render (web + Postgres)
 build/          ferramenta de build (Tailwind + hashes da CSP)
 _headers        cabeçalhos de segurança para Netlify / Cloudflare Pages
 SECURITY.md     modelo de segurança, limites e checklist para produção

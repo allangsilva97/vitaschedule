@@ -16,3 +16,9 @@ build/.tmp/
 *.log
 .DS_Store
 Thumbs.db
+
+# API Python
+api/.venv/
+__pycache__/
+.pytest_cache/
+*.db

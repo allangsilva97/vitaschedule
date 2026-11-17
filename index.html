@@ -16,11 +16,11 @@
     -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'none';
-        script-src 'sha256-PgIC3c9Y+3AcOvPJFP+2LCWReayIvqX5rHK5atmxpHc=';
+        script-src 'sha256-jR40LyUxyL+h+tCKs+7/pl1I/eS6KhgfJJ3xpbCu7Wk=';
         style-src 'sha256-fw4TLH7PY620djIRiJ+5+hZ+Q/AAFj+mnyniGsntc6A=' https://cdnjs.cloudflare.com https://fonts.googleapis.com;
         font-src https://cdnjs.cloudflare.com https://fonts.gstatic.com;
         img-src data:;
-        connect-src 'none';
+        connect-src 'self';
         form-action 'none';
         base-uri 'none';
         object-src 'none'">
@@ -212,11 +212,10 @@
         // ---------------------------------------------------------------
         // Configuração
         // ---------------------------------------------------------------
-        const DEMO_MODE = true;                      // Em produção: false (e autenticar no servidor)
-        const DEMO_PASSWORD_HINT = 'Vita#Demo2026';  // Exibido apenas em DEMO_MODE
-        const IDLE_TIMEOUT_MS = 15 * 60 * 1000;      // Logout automático por inatividade
-        const PBKDF2_ITERATIONS = 100000;
-        const DUMMY_SALT = '1cd89c1012246da088dfa2c234f1ce6c'; // Usado p/ equalizar o tempo quando o usuário não existe
+        const API = '/api';
+        let DEMO_MODE = false;                       // vem de GET /api/config (SEED_DEMO no servidor)
+        let DEMO_PASSWORD_HINT = '';
+        const IDLE_TIMEOUT_MS = 15 * 60 * 1000;      // Logout automático por inatividade (o servidor também expira a sessão)
 
         const ROLE_LABEL = { Patient: 'Paciente', Reception: 'Recepção', Doctor: 'Médico(a)', Admin: 'Administrador' };
         const PORTAL_LABEL = { Patient: 'Área do Paciente', Reception: 'Painel Recepção', Doctor: 'Portal Médico', Admin: 'Painel Admin' };
@@ -334,120 +333,50 @@
             return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
         }
 
-        // Protocolo imprevisível (CSPRNG), 8 caracteres de um alfabeto de 32 símbolos sem ambiguidade (sem 0/O/1/I).
-        const PROTOCOL_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 símbolos -> 256 % 32 === 0, sem viés
-        function newProtocol() {
-            const bytes = new Uint8Array(8);
-            crypto.getRandomValues(bytes);
-            let out = '';
-            for (const b of bytes) out += PROTOCOL_ALPHABET[b % 32];
-            return 'VIT-' + out;
-        }
-
-        // Limitador de tentativas (apenas dissuasão no cliente; o limite real deve existir no servidor).
-        function makeThrottle(maxFails, windowMs, lockMs) {
-            let fails = [];
-            let lockedUntil = 0;
-            return {
-                secondsLeft() {
-                    const left = lockedUntil - Date.now();
-                    return left > 0 ? Math.ceil(left / 1000) : 0;
-                },
-                fail() {
-                    const now = Date.now();
-                    fails = fails.filter((t) => now - t < windowMs);
-                    fails.push(now);
-                    if (fails.length >= maxFails) { lockedUntil = now + lockMs; fails = []; }
-                },
-                reset() { fails = []; }
-            };
-        }
-        const loginThrottle = makeThrottle(5, 5 * 60 * 1000, 60 * 1000);
-        const lookupThrottle = makeThrottle(5, 5 * 60 * 1000, 60 * 1000);
-
         // ---------------------------------------------------------------
-        // Senhas (PBKDF2-SHA256 via Web Crypto) - somente para a demonstração
+        // Cliente da API (sessão em cookie HttpOnly; o front nunca vê token nem hash de senha)
         // ---------------------------------------------------------------
-        function hexToBytes(hex) {
-            const out = new Uint8Array(hex.length / 2);
-            for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.substr(i * 2, 2), 16);
-            return out;
+        class ApiError extends Error {
+            constructor(status, message) { super(message); this.status = status; }
         }
-        function bytesToHex(buf) {
-            return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
-        }
-        async function pbkdf2Hex(password, saltHex) {
-            const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
-            const bits = await crypto.subtle.deriveBits(
-                { name: 'PBKDF2', salt: hexToBytes(saltHex), iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' }, key, 256);
-            return bytesToHex(bits);
-        }
-        function safeEqual(a, b) { // comparação em tempo constante
-            if (a.length !== b.length) return false;
-            let r = 0;
-            for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
-            return r === 0;
+        async function api(method, path, body) {
+            let res;
+            try {
+                res = await fetch(API + path, {
+                    method, credentials: 'same-origin', cache: 'no-store',
+                    headers: Object.assign({ 'X-Requested-With': 'vitaschedule' }, body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+                    body: body !== undefined ? JSON.stringify(body) : undefined
+                });
+            } catch (_) {
+                throw new ApiError(0, 'Sem conexão com o servidor. Tente novamente.');
+            }
+            let data = null;
+            try { data = await res.json(); } catch (_) { /* resposta sem corpo */ }
+            if (!res.ok) {
+                if (res.status === 401 && state.currentUser) sessionExpired();
+                const msg = data && typeof data.detail === 'string' ? data.detail : 'Não foi possível concluir a operação. Confira os dados.';
+                throw new ApiError(res.status, msg);
+            }
+            return data;
         }
 
         // ---------------------------------------------------------------
         // Estado da aplicação (dentro de closure: não fica exposto em window)
         // ---------------------------------------------------------------
         const state = {
-            currentUser: null,      // cópia imutável, sem segredos; null = visitante
+            currentUser: null,      // vem do servidor (GET /api/auth/me); null = visitante
             currentTab: 'home',
-            doctors: [
-                { id: 1, name: 'Dra. Mariana Souza', specialty: 'Cardiologia', rating: '4.9 (124 avaliações)', avatar: 'MS', insurance: ['Unimed', 'Bradesco Saúde', 'Particular'], days: [1, 3, 5], slots: ['09:00', '10:15', '14:00', '16:30'] },
-                { id: 2, name: 'Dr. Carlos Eduardo', specialty: 'Ortopedia', rating: '4.8 (98 avaliações)', avatar: 'CE', insurance: ['SulAmérica', 'Unimed', 'Particular'], days: [2, 4, 5], slots: ['09:00', '10:15', '14:00'] },
-                { id: 3, name: 'Dra. Juliana Mendes', specialty: 'Dermatologia', rating: '5.0 (215 avaliações)', avatar: 'JM', insurance: ['Particular', 'Amil'], days: [1, 2, 3, 4, 5], slots: ['14:00', '16:30'] },
-                { id: 4, name: 'Dr. Roberto Alves', specialty: 'Pediatria', rating: '4.9 (160 avaliações)', avatar: 'RA', insurance: ['Unimed', 'Amil', 'Bradesco Saúde', 'Particular'], days: [1, 2, 4], slots: ['09:00', '10:15', '14:00'] },
-                { id: 5, name: 'Dra. Fernanda Lima', specialty: 'Ginecologia', rating: '4.9 (189 avaliações)', avatar: 'FL', insurance: ['SulAmérica', 'Particular'], days: [3, 5], slots: ['10:15', '14:00', '16:30'] }
-            ],
-            // ownerId = id do usuário (paciente) dono do agendamento; null = agendado sem conta
-            appointments: [
-                { id: 'VIT-8092', ownerId: 1, patientName: 'Ana Beatriz Silva', patientCPF: '123.456.789-09', doctorName: 'Dra. Mariana Souza', specialty: 'Cardiologia', date: '2026-06-10', time: '14:00', status: 'Aguardando', insurance: 'Unimed', authorizationStatus: 'Autorizado', type: 'Consulta Presencial' },
-                { id: 'VIT-8091', ownerId: null, patientName: 'Lucas Ferreira', patientCPF: '987.654.321-00', doctorName: 'Dr. Carlos Eduardo', specialty: 'Ortopedia', date: '2026-06-10', time: '15:15', status: 'Em atendimento', insurance: 'Particular', authorizationStatus: 'N/A (Particular)', type: 'Retorno' },
-                { id: 'VIT-8090', ownerId: null, patientName: 'Camila Rocha', patientCPF: '456.123.789-55', doctorName: 'Dra. Juliana Mendes', specialty: 'Dermatologia', date: '2026-06-09', time: '10:30', status: 'Finalizado', insurance: 'Amil', authorizationStatus: 'Pendente Guia', type: 'Consulta Presencial' },
-                { id: 'VIT-8089', ownerId: null, patientName: 'João Pedro Santos', patientCPF: '789.321.654-91', doctorName: 'Dr. Roberto Alves', specialty: 'Pediatria', date: '2026-06-11', time: '09:00', status: 'Confirmado', insurance: 'Unimed', authorizationStatus: 'Autorizado', type: 'Primeira Vez' }
-            ],
-            patientsCRM: [
-                { name: 'Ana Beatriz Silva', cpf: '123.456.789-09', phone: '(11) 98765-4321', insurance: 'Unimed (Carteirinha #49821)', notes: 'Alérgica a dipirona. Histórico de hipertensão leve.' },
-                { name: 'Lucas Ferreira', cpf: '987.654.321-00', phone: '(11) 97123-8899', insurance: 'Particular', notes: 'Atleta amador. Lesão prévia no joelho direito.' },
-                { name: 'Camila Rocha', cpf: '456.123.789-55', phone: '(11) 99332-1144', insurance: 'Amil (Carteirinha #77210)', notes: 'Pele sensível. Tratamento contínuo com protetor solar fator 60.' }
-            ],
-            // Credenciais DEMO: PBKDF2-SHA256 com salt individual. Em produção isto não existe no front-end.
-            users: [
-                { id: 1, name: 'Ana Beatriz Silva', email: 'paciente@vitamed.com', role: 'Patient', cpf: '123.456.789-09', twoFactor: true,
-                  salt: '4da8ecc2bb33d27670385d061ed861a1', hash: 'fd8fe228138e3cc1a51ee05b057ba307e4412c76cb110f17646918cf2dd25271' },
-                { id: 2, name: 'Carla Recepção', email: 'recepcao@vitamed.com', role: 'Reception', twoFactor: false,
-                  salt: '919ce3e5e5da28e1e54511a3966d4fd7', hash: 'd5ffa84de9aadf8c3ca1049ad26415339313c45fe2f02170e95f8cc8a44bf476' },
-                { id: 3, name: 'Dra. Mariana Souza', email: 'mariana.souza@vitamed.com', role: 'Doctor', doctorName: 'Dra. Mariana Souza', twoFactor: true,
-                  salt: 'ee20ba315b943756615d8d12f8623048', hash: 'd474d5a8a0543f8725eeaa1c7ce196617268bc96b361f25e07ea80921e575579' },
-                { id: 4, name: 'Admin Gestão', email: 'admin@vitamed.com', role: 'Admin', twoFactor: true,
-                  salt: '6ccad0d0ae8bb6df818ac6b1f0299253', hash: 'f14873d0b328ad6f708a0de9f4e81b49401581f99f94ad362dc8a9bc409ab537' }
-            ],
-            blockedSlots: [
-                { doctor: 'Dra. Mariana Souza', start: '2026-06-15', end: '2026-06-18', reason: 'Congresso de Cardiologia' }
-            ],
-            auditLog: []
+            doctors: [],            // inclui "busy" (horários ocupados) e "blocks" (períodos bloqueados), sem dados de pacientes
+            appointments: [],       // já filtrados pelo servidor conforme o perfil
+            admin: null,            // visão do administrador (usuários, auditoria, totais)
+            loading: true
         };
 
         let lastActivity = Date.now();
         let pendingConfirm = null;
         const homeFilter = { specialty: '', insurance: '' };
 
-        // ---------------------------------------------------------------
-        // Auditoria (LGPD: registro de acessos a dados pessoais). Em memória, apenas demonstrativo.
-        // Não registre dados digitados pelo usuário (nome, CPF, texto livre) neste log.
-        // ---------------------------------------------------------------
-        function audit(action, detail) {
-            state.auditLog.unshift({
-                ts: new Date().toISOString(),
-                user: state.currentUser ? state.currentUser.email : 'anônimo',
-                action,
-                detail: detail || ''
-            });
-            if (state.auditLog.length > 200) state.auditLog.length = 200;
-        }
+        // Auditoria: registrada no servidor (tabela audit_log); o front não grava nem altera o log.
 
         // ---------------------------------------------------------------
         // Autorização
@@ -464,11 +393,10 @@
             return u ? TAB_BY_ROLE[u.role] : 'home';
         }
 
-        // Toda ação privilegiada confere o perfil da SESSÃO (nunca um valor vindo de formulário/DOM).
+        // Atalho de UI: esconde ações que o perfil não tem. A autorização de verdade é feita pelo servidor em cada requisição.
         function requireRole(...roles) {
             const u = state.currentUser;
             if (!u || !roles.includes(u.role)) {
-                audit('Acesso negado', 'ação restrita');
                 showToast('Acesso negado: você não tem permissão para esta ação.', 'error');
                 return null;
             }
@@ -575,62 +503,64 @@
             const errBox = $('login-error');
             clearFormError(errBox);
 
-            const wait = loginThrottle.secondsLeft();
-            if (wait) return showFormError(errBox, `Muitas tentativas. Tente novamente em ${wait}s.`);
-
-            const identifier = String(form.elements['identifier'].value).trim().toLowerCase().slice(0, 254);
+            const identifier = String(form.elements['identifier'].value).trim().slice(0, 254);
             const password = String(form.elements['password'].value).slice(0, 128);
             form.elements['password'].value = ''; // nunca mantém a senha no DOM
             if (!identifier || !password) return showFormError(errBox, 'Informe e-mail/CPF e senha.');
-            if (!(window.crypto && window.crypto.subtle)) {
-                return showFormError(errBox, 'Ambiente sem suporte a criptografia. Abra a página via HTTPS ou localhost.');
-            }
 
             loginInFlight = true;
             $('login-submit').disabled = true;
             try {
-                const idDigits = onlyDigits(identifier);
-                const user = state.users.find((u) =>
-                    u.email.toLowerCase() === identifier || (idDigits.length === 11 && u.cpf && onlyDigits(u.cpf) === idDigits));
-
-                // Sempre calcula o hash (mesmo sem usuário) para não revelar, pelo tempo, se a conta existe.
-                const hash = await pbkdf2Hex(password, user ? user.salt : DUMMY_SALT);
-                const ok = !!user && safeEqual(hash, user.hash);
-
-                if (!ok) {
-                    loginThrottle.fail();
-                    audit('Login falhou', user ? user.email : 'identificador desconhecido');
-                    return showFormError(errBox, 'Credenciais inválidas.'); // mensagem única: não enumera contas
-                }
-                loginThrottle.reset();
-                startSession(user);
-            } catch (_) {
-                showFormError(errBox, 'Não foi possível concluir o login. Tente novamente.');
+                const res = await api('POST', '/auth/login', { identifier, password });
+                await startSession(res.user);
+            } catch (e) {
+                showFormError(errBox, e instanceof ApiError && e.status !== 0 && e.status < 500 ? e.message : 'Não foi possível concluir o login. Tente novamente.');
             } finally {
                 loginInFlight = false;
                 $('login-submit').disabled = false;
             }
         }
 
-        function startSession(user) {
-            // O perfil vem do REGISTRO do usuário (nunca de um campo do formulário). Cópia imutável, sem salt/hash.
+        async function refreshData() {
+            const u = state.currentUser;
+            const jobs = [api('GET', '/doctors').then((d) => { state.doctors = d; })];
+            if (u && ['Patient', 'Reception', 'Doctor'].includes(u.role)) jobs.push(api('GET', '/appointments').then((a) => { state.appointments = a; }));
+            if (u && u.role === 'Admin') jobs.push(api('GET', '/admin/overview').then((o) => { state.admin = o; }));
+            await Promise.all(jobs);
+        }
+
+        async function startSession(user) {
+            // Perfil e identidade vêm do SERVIDOR. Cópia imutável.
             state.currentUser = Object.freeze({
                 id: user.id, name: user.name, email: user.email, role: user.role,
                 cpf: user.cpf || null, doctorName: user.doctorName || null
             });
             lastActivity = Date.now();
-            audit('Login', ROLE_LABEL[user.role]);
             closeAllModals();
+            try { await refreshData(); } catch (_) { showToast('Não foi possível carregar os dados.', 'error'); }
             showToast(`Bem-vindo(a), ${user.name} (${ROLE_LABEL[user.role]})!`, 'success');
             router.navigate(TAB_BY_ROLE[user.role]);
         }
 
-        function logout(message) {
-            if (!state.currentUser) return;
-            audit('Logout', '');
+        function clearSession() {
             state.currentUser = null;
+            state.appointments = [];
+            state.admin = null;
             closeAllModals();
             $('booking-modal-content').replaceChildren(); // remove dados do DOM
+        }
+
+        function sessionExpired() {
+            clearSession();
+            showToast('Sessão expirada. Entre novamente.', 'info');
+            router.navigate('home');
+            api('GET', '/doctors').then((d) => { state.doctors = d; render(); }).catch(() => {});
+        }
+
+        async function logout(message) {
+            if (!state.currentUser) return;
+            try { await api('POST', '/auth/logout'); } catch (_) { /* cookie expira sozinho */ }
+            clearSession();
             showToast(message || 'Sessão encerrada com sucesso.', 'info');
             router.navigate('home');
         }
@@ -653,23 +583,23 @@
         // ---------------------------------------------------------------
         // Agendamento
         // ---------------------------------------------------------------
-        function isBlocked(doctorName, date) {
-            return state.blockedSlots.some((b) => b.doctor === doctorName && date >= b.start && date <= b.end);
+        function isBlocked(doc, date) {
+            return doc.blocks.some(([start, end]) => date >= start && date <= end);
         }
-        function isSlotTaken(doctorName, date, time) {
-            return state.appointments.some((a) =>
-                a.doctorName === doctorName && a.date === date && a.time === time && !INACTIVE_STATUSES.has(a.status));
+        function isSlotTaken(doc, date, time) {
+            return doc.busy.some(([d, t]) => d === date && t === time);
         }
 
         // Disponibilidade: dias da semana (0=dom) e horários de cada médico, menos bloqueios, horários ocupados e horários já passados.
+        // (O servidor revalida tudo ao agendar; isto só evita mostrar opções inválidas.)
         const WEEKDAY_SHORT = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
         const weekdayOf = (iso) => { const [y, m, d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)).getUTCDay(); };
         const brDate = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
         function freeSlots(doc, date) {
-            if (!doc || !isValidISODate(date) || !doc.days.includes(weekdayOf(date)) || isBlocked(doc.name, date)) return [];
+            if (!doc || !isValidISODate(date) || !doc.days.includes(weekdayOf(date)) || isBlocked(doc, date)) return [];
             const now = new Date();
             const nowHM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            return doc.slots.filter((t) => !isSlotTaken(doc.name, date, t) && !(date === todayISO() && t <= nowHM));
+            return doc.slots.filter((t) => !isSlotTaken(doc, date, t) && !(date === todayISO() && t <= nowHM));
         }
         function availableDates(doc, limit = 30) {
             const out = [];
@@ -826,7 +756,9 @@
             if (doc) form.elements['time'].innerHTML = timeOptionsHTML(doc, select.value);
         }
 
-        function handleConfirmBooking(form) {
+        let bookingInFlight = false;
+        async function handleConfirmBooking(form) {
+            if (bookingInFlight) return;
             const errBox = $('book-error');
             clearFormError(errBox);
             const fail = (msg) => showFormError(errBox, msg);
@@ -835,84 +767,65 @@
             const doc = state.doctors.find((d) => d.id === Number(fd.get('doctorId')));
             if (!doc) return fail('Profissional inválido.');
 
-            // Identidade: paciente logado => vem da SESSÃO; caso contrário (visitante/recepção) => formulário validado.
+            // Validação de conveniência (resposta rápida); o servidor valida tudo de novo e é quem decide.
             const u = state.currentUser;
-            let patientName, cpf, ownerId = null;
-            if (u && u.role === 'Patient') {
-                patientName = u.name; cpf = u.cpf; ownerId = u.id;
-            } else {
-                patientName = String(fd.get('patientName') || '').trim().replace(/\s+/g, ' ');
-                cpf = String(fd.get('cpf') || '');
+            const isPatient = !!u && u.role === 'Patient';
+            const patientName = String(fd.get('patientName') || '').trim().replace(/\s+/g, ' ');
+            const cpf = String(fd.get('cpf') || '');
+            if (!isPatient) {
+                if (!NAME_RE.test(patientName)) return fail('Informe o nome completo (apenas letras, de 3 a 100 caracteres).');
+                if (!isValidCPF(cpf)) return fail('CPF inválido.');
             }
-            if (!NAME_RE.test(patientName)) return fail('Informe o nome completo (apenas letras, de 3 a 100 caracteres).');
-            if (!isValidCPF(cpf)) return fail('CPF inválido.');
-
             const phone = String(fd.get('phone') || '').trim();
             const email = String(fd.get('email') || '').trim().toLowerCase();
             if (!isValidPhone(phone)) return fail('Telefone inválido. Informe DDD + número (ex: (11) 91234-5678).');
             if (!isValidEmail(email)) return fail('E-mail inválido.');
-
-            const insurance = String(fd.get('insurance') || '');
-            if (!doc.insurance.includes(insurance)) return fail('Convênio não atendido por este profissional.');
-
             const date = String(fd.get('date') || '');
-            const today = todayISO();
-            if (!isValidISODate(date)) return fail('Selecione uma data válida.');
-            if (date < today) return fail('A data da consulta não pode estar no passado.');
-            if (date > addDaysISO(today, 365)) return fail('Agendamentos são aceitos em até 12 meses.');
-
             const time = String(fd.get('time') || '');
-            if (!SLOTS.some((s) => s.value === time)) return fail('Horário inválido.');
-            if (!doc.days.includes(weekdayOf(date))) return fail(`O profissional não atende neste dia da semana (atende: ${workDaysLabel(doc)}).`);
-            if (!doc.slots.includes(time)) return fail('O profissional não atende neste horário.');
-
+            if (!isValidISODate(date) || !time) return fail('Selecione uma data e um horário disponíveis.');
             if (fd.get('consent') !== 'on') return fail('É necessário consentir com o tratamento de dados (LGPD).');
 
-            if (isBlocked(doc.name, date)) return fail('O profissional não atende nesta data (agenda bloqueada).');
-            if (isSlotTaken(doc.name, date, time)) return fail('Este horário já está ocupado. Escolha outro.');
-            if (!freeSlots(doc, date).includes(time)) return fail('Horário indisponível. Escolha outro.');
+            const payload = {
+                doctorId: doc.id, phone, email, insurance: String(fd.get('insurance') || ''), date, time, consent: true
+            };
+            if (!isPatient) { payload.patientName = patientName; payload.cpf = cpf; } // paciente logado: identidade vem da sessão
 
-            let protocol;
-            do { protocol = newProtocol(); } while (state.appointments.some((a) => a.id === protocol));
-
-            state.appointments.unshift({
-                id: protocol,
-                ownerId,
-                patientName,
-                patientCPF: formatCPF(cpf),
-                phone: formatPhone(phone),
-                email,
-                reminderDate: addDaysISO(date, -1) >= today ? addDaysISO(date, -1) : null, // lembrete 1 dia antes
-                doctorName: doc.name,
-                specialty: doc.specialty,
-                date,
-                time,
-                status: 'Confirmado',
-                insurance,
-                authorizationStatus: insurance === 'Particular' ? 'N/A (Particular)' : 'Pendente Guia',
-                type: 'Consulta Presencial',
-                consentAt: new Date().toISOString()
-            });
-            audit('Agendamento criado', protocol);
-            closeModal('booking-modal');
-            const reminderInfo = addDaysISO(date, -1) >= today
-                ? `Lembrete agendado para ${brDate(addDaysISO(date, -1))} (1 dia antes).`
-                : 'Consulta em menos de 1 dia: não haverá lembrete.';
-            showMessageBox('Agendamento Realizado com Sucesso!',
-                `Consulta com ${doc.name} em ${brDate(date)} às ${time}.\n\nProtocolo: ${protocol}\nConfirmação para: ${maskEmail(email)} e ${maskPhone(phone)}\n${reminderInfo}\n\n(Protótipo: o envio real de mensagens exige um servidor; aqui ele é apenas simulado.)\nGuarde o protocolo e o CPF do paciente para consultar o status.`, 'fa-circle-check');
-            render();
+            bookingInFlight = true;
+            try {
+                const r = await api('POST', '/appointments', payload);
+                closeModal('booking-modal');
+                try { await refreshData(); } catch (_) { /* a tela atualiza no próximo carregamento */ }
+                const reminderInfo = r.reminderDate
+                    ? `Lembrete agendado para ${brDate(r.reminderDate)} (1 dia antes).`
+                    : 'Consulta em menos de 1 dia: não haverá lembrete.';
+                showMessageBox('Agendamento Realizado com Sucesso!',
+                    `Consulta com ${r.doctorName} em ${brDate(r.date)} às ${r.time}.\n\nProtocolo: ${r.protocol}\nConfirmação para: ${maskEmail(r.email)} e ${maskPhone(r.phone)}\n${reminderInfo}\n\n(O envio real de e-mail/SMS ainda não está ligado: confirmação e lembrete ficam apenas registrados.)\nGuarde o protocolo e o CPF do paciente para consultar o status.`, 'fa-circle-check');
+                render();
+            } catch (e) {
+                fail(e.message);
+                if (e.status === 409) { // horário tomado por outra pessoa: atualiza as opções
+                    try {
+                        await refreshData();
+                        const dateSel = form.elements['date'];
+                        const docNow = state.doctors.find((d) => d.id === doc.id);
+                        if (docNow && dateSel) {
+                            dateSel.innerHTML = dateOptionsHTML(docNow);
+                            form.elements['time'].innerHTML = timeOptionsHTML(docNow, dateSel.value);
+                        }
+                    } catch (_) { /* mantém o formulário */ }
+                }
+            } finally {
+                bookingInFlight = false;
+            }
         }
 
         // ---------------------------------------------------------------
         // Consulta pública de status (exige protocolo + CPF; retorna dados mínimos)
         // ---------------------------------------------------------------
-        function checkPublicStatus(form) {
+        async function checkPublicStatus(form) {
             const box = $('public-status-result');
             const show = (html) => { box.innerHTML = html; box.classList.remove('hidden'); };
             const errorHTML = (msg) => `<div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> ${esc(msg)}</div>`;
-
-            const wait = lookupThrottle.secondsLeft();
-            if (wait) return show(errorHTML(`Muitas tentativas. Tente novamente em ${wait}s.`));
 
             const fd = new FormData(form);
             const protocol = String(fd.get('protocol') || '').trim().toUpperCase().slice(0, 12);
@@ -921,26 +834,26 @@
                 return show(errorHTML('Informe um protocolo válido (ex: VIT-8092) e o CPF com 11 dígitos.'));
             }
 
-            const appt = state.appointments.find((a) => a.id === protocol && onlyDigits(a.patientCPF) === cpfDigits);
-            if (!appt) {
-                lookupThrottle.fail();
-                // Mensagem genérica e sem eco da entrada: não revela se o protocolo ou o CPF existem.
-                return show(errorHTML('Nenhum agendamento encontrado para os dados informados.'));
+            let appt;
+            try {
+                appt = await api('POST', '/appointments/lookup', { protocol, cpf: cpfDigits });
+            } catch (e) {
+                // O 404 é genérico de propósito: não revela se o protocolo ou o CPF existem.
+                return show(errorHTML(e.message));
             }
-            lookupThrottle.reset();
 
             show(`
                 <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-3 text-left">
                     <div class="flex items-center justify-between">
                         <div>
                             <span class="text-xs font-mono font-bold text-brand-600">${esc(appt.id)}</span>
-                            <h4 class="font-bold text-base mt-0.5">${esc(maskName(appt.patientName))}</h4>
+                            <h4 class="font-bold text-base mt-0.5">${esc(appt.patientName)}</h4>
                         </div>
                         <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">${esc(appt.status)}</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-200 dark:border-slate-800">
                         <div><span class="text-slate-400 block">Profissional</span><span class="font-medium">${esc(appt.doctorName)} (${esc(appt.specialty)})</span></div>
-                        <div><span class="text-slate-400 block">Data e Hora</span><span class="font-medium">${esc(appt.date)} às ${esc(appt.time)}</span></div>
+                        <div><span class="text-slate-400 block">Data e Hora</span><span class="font-medium">${esc(brDate(appt.date))} às ${esc(appt.time)}</span></div>
                     </div>
                     <p class="text-[11px] text-slate-400">Dados de convênio e identificação completa ficam disponíveis apenas na Área do Paciente.</p>
                 </div>
@@ -1062,7 +975,7 @@
                         <h2 class="text-2xl font-bold mb-1">Corpo Clínico Disponível</h2>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mb-6" role="status">${visibleDoctors.length} de ${state.doctors.length} profissionais${homeFilter.specialty ? ` · ${esc(homeFilter.specialty)}` : ''}${homeFilter.insurance ? ` · ${esc(homeFilter.insurance)}` : ''}</p>
                         <div id="doctors-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            ${visibleDoctors.length === 0 ? `<p class="text-sm text-slate-500 dark:text-slate-400">Nenhum profissional encontrado para os filtros selecionados.</p>` : ''}
+                            ${visibleDoctors.length === 0 ? `<p class="text-sm text-slate-500 dark:text-slate-400">${state.loading ? 'Carregando profissionais...' : 'Nenhum profissional encontrado para os filtros selecionados.'}</p>` : ''}
                             ${visibleDoctors.map((doc) => `
                                 <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition">
                                     <div>
@@ -1112,7 +1025,7 @@
         // --- 2. Patient Portal ---
         function renderPatientDashboard() {
             const u = state.currentUser;
-            const mine = state.appointments.filter((a) => a.ownerId === u.id); // só os agendamentos DESTE usuário
+            const mine = state.appointments; // o servidor já devolve só os agendamentos DESTE usuário
             const initials = u.name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('');
             return `
                 <div class="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto w-full p-6 gap-8">
@@ -1152,13 +1065,13 @@
                                             <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/20">
                                                 <td class="py-3 font-mono font-bold text-brand-600 text-xs">${esc(a.id)}</td>
                                                 <td class="py-3 font-medium">${esc(a.doctorName)} <br><span class="text-xs text-slate-400">${esc(a.specialty)}</span></td>
-                                                <td class="py-3 text-xs">${esc(a.date)} às ${esc(a.time)}</td>
+                                                <td class="py-3 text-xs">${esc(brDate(a.date))} às ${esc(a.time)}</td>
                                                 <td class="py-3 text-xs">${esc(a.insurance)}</td>
                                                 <td class="py-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-600">${esc(a.status)}</span>${a.reminderDate ? `<div class="text-[10px] text-slate-400 mt-1"><i class="fa-regular fa-bell"></i> Lembrete: ${esc(brDate(a.reminderDate))}</div>` : ''}</td>
                                                 <td class="py-3 text-right space-x-2">
-                                                    <button type="button" data-action="reschedule" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-semibold rounded-lg">Remarcar</button>
                                                     ${CANCELLABLE_STATUSES.has(a.status)
-                                                        ? `<button type="button" data-action="cancel-appt" data-id="${esc(a.id)}" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-100 text-xs font-semibold rounded-lg">Cancelar</button>`
+                                                        ? `<button type="button" data-action="reschedule" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-semibold rounded-lg">Remarcar</button>
+                                                           <button type="button" data-action="cancel-appt" data-id="${esc(a.id)}" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-100 text-xs font-semibold rounded-lg">Cancelar</button>`
                                                         : ''}
                                                 </td>
                                             </tr>
@@ -1172,19 +1085,15 @@
             `;
         }
 
-        function cancelAppointment(id) {
-            const u = requireRole('Patient');
-            if (!u) return;
-            const appt = state.appointments.find((a) => a.id === id);
-            // Verificação de propriedade (evita acesso a agendamentos de terceiros, mesmo conhecendo o protocolo)
-            if (!appt || appt.ownerId !== u.id) {
-                audit('Acesso negado', 'cancelamento de agendamento de terceiro');
-                return showToast('Agendamento não encontrado.', 'error');
+        async function cancelAppointment(id) {
+            if (!requireRole('Patient')) return;
+            try {
+                await api('POST', `/appointments/${encodeURIComponent(id)}/cancel`);
+                await refreshData();
+                showMessageBox('Consulta Cancelada', `A consulta ${id} foi cancelada com sucesso.`, 'fa-circle-check');
+            } catch (e) {
+                showToast(e.message, 'error');
             }
-            if (!CANCELLABLE_STATUSES.has(appt.status)) return showToast('Este agendamento não pode mais ser cancelado.', 'error');
-            appt.status = 'Cancelado';
-            audit('Agendamento cancelado', appt.id);
-            showMessageBox('Consulta Cancelada', `A consulta ${appt.id} foi cancelada com sucesso.`, 'fa-circle-check');
             render();
         }
 
@@ -1223,7 +1132,7 @@
                                     ${state.appointments.map((a) => `
                                         <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/20">
                                             <td class="py-3 font-mono font-bold text-brand-600 text-xs">${esc(a.id)}</td>
-                                            <td class="py-3 font-medium">${esc(a.patientName)} <br><span class="text-xs text-slate-400">${esc(maskCPF(a.patientCPF))}</span></td>
+                                            <td class="py-3 font-medium">${esc(a.patientName)} <br><span class="text-xs text-slate-400">${esc(a.cpfMasked)}</span></td>
                                             <td class="py-3 text-xs font-semibold">${esc(a.doctorName)}</td>
                                             <td class="py-3 text-xs">${esc(a.date)} ${esc(a.time)}</td>
                                             <td class="py-3 text-xs">${esc(a.insurance)} <br><span class="text-[10px] text-amber-600">${esc(a.authorizationStatus)}</span></td>
@@ -1243,21 +1152,22 @@
             `;
         }
 
-        function updateAppointmentStatus(id, newStatus) {
-            if (!requireRole('Reception')) return render(); // re-render restaura o valor do select
-            if (!STATUSES.includes(newStatus)) return render();
-            const appt = state.appointments.find((a) => a.id === id);
-            if (!appt) return render();
-            appt.status = newStatus;
-            audit('Status alterado', `${appt.id} -> ${newStatus}`);
-            showToast(`Agendamento ${appt.id} atualizado para: ${newStatus}`, 'success');
+        async function updateAppointmentStatus(id, newStatus) {
+            if (!requireRole('Reception') || !STATUSES.includes(newStatus)) return render(); // re-render restaura o select
+            try {
+                await api('PATCH', `/appointments/${encodeURIComponent(id)}/status`, { status: newStatus });
+                await refreshData();
+                showToast(`Agendamento ${id} atualizado para: ${newStatus}`, 'success');
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
             render();
         }
 
         // --- 4. Doctor Portal ---
         function renderDoctorDashboard() {
             const u = state.currentUser;
-            const mine = state.appointments.filter((a) => a.doctorName === u.doctorName); // só os pacientes DESTE médico
+            const mine = state.appointments; // o servidor já devolve só os pacientes DESTE médico
             return `
                 <div class="flex-1 flex flex-col max-w-7xl mx-auto w-full p-6 space-y-6">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1282,7 +1192,7 @@
                                             <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-brand-50 text-brand-600">${esc(a.date)} ${esc(a.time)}</span>
                                         </div>
                                         <h4 class="font-bold text-base mt-1">${esc(a.patientName)}</h4>
-                                        <p class="text-xs text-slate-400">CPF: ${esc(maskCPF(a.patientCPF))} | Convênio: ${esc(a.insurance)}</p>
+                                        <p class="text-xs text-slate-400">CPF: ${esc(a.cpfMasked)} | Convênio: ${esc(a.insurance)}</p>
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <button type="button" data-action="open-pep" data-id="${esc(a.id)}" class="px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl">Abrir PEP</button>
@@ -1295,18 +1205,15 @@
             `;
         }
 
-        function openPEP(id) {
-            const u = requireRole('Doctor');
-            if (!u) return;
-            const appt = state.appointments.find((a) => a.id === id);
-            // Só o médico responsável pelo agendamento pode abrir o prontuário do paciente
-            if (!appt || appt.doctorName !== u.doctorName) {
-                audit('Acesso negado', 'prontuário de paciente de outro profissional');
-                return showToast('Acesso negado ao prontuário.', 'error');
+        async function openPEP(id) {
+            if (!requireRole('Doctor')) return;
+            let rec;
+            try {
+                rec = await api('GET', `/appointments/${encodeURIComponent(id)}/record`); // o servidor só libera ao médico responsável
+            } catch (e) {
+                return showToast(e.message, 'error');
             }
-            const rec = state.patientsCRM.find((p) => onlyDigits(p.cpf) === onlyDigits(appt.patientCPF));
-            audit('Acesso ao prontuário', appt.id);
-            const text = rec
+            const text = rec.found
                 ? `Paciente: ${rec.name}\nConvênio: ${rec.insurance}\n\nObservações clínicas:\n${rec.notes}`
                 : 'Nenhum registro clínico encontrado para este paciente.';
             showMessageBox('Prontuário Eletrônico (PEP)', text, 'fa-file-medical');
@@ -1326,29 +1233,28 @@
             openModal('block-time-modal');
         }
 
-        function handleBlockTime(form) {
-            const u = requireRole('Doctor');
-            if (!u) return;
+        async function handleBlockTime(form) {
+            if (!requireRole('Doctor')) return;
             const errBox = $('block-error');
             clearFormError(errBox);
             const fail = (msg) => showFormError(errBox, msg);
 
             const fd = new FormData(form);
-            const doctor = String(fd.get('doctor') || '');
-            if (doctor !== u.doctorName) return fail('Você só pode bloquear a sua própria agenda.');
-
             const start = String(fd.get('start') || '');
             const end = String(fd.get('end') || '');
             if (!isValidISODate(start) || !isValidISODate(end)) return fail('Datas inválidas.');
             if (start < todayISO()) return fail('A data de início não pode estar no passado.');
             if (end < start) return fail('A data final deve ser igual ou posterior à inicial.');
             if (daysBetween(start, end) > 365) return fail('O bloqueio não pode ultrapassar 365 dias.');
-
             const reason = String(fd.get('reason') || '').trim().replace(/\s+/g, ' ');
             if (reason.length < 3 || reason.length > 120) return fail('Informe um motivo de 3 a 120 caracteres.');
 
-            state.blockedSlots.push({ doctor, start, end, reason });
-            audit('Agenda bloqueada', `${start} a ${end}`);
+            try {
+                await api('POST', '/blocks', { start, end, reason }); // o médico é o da sessão, nunca um campo do formulário
+                await refreshData();
+            } catch (e) {
+                return fail(e.message);
+            }
             closeModal('block-time-modal');
             showToast('Período bloqueado com sucesso na agenda.', 'success');
         }
@@ -1356,6 +1262,7 @@
         // --- 5. Admin Panel ---
         function renderAdminDashboard() {
             const u = state.currentUser;
+            const adm = state.admin || { users: [], audit: [], appointmentsTotal: 0, appointmentsMonth: 0 };
             return `
                 <div class="flex-1 flex flex-col max-w-7xl mx-auto w-full p-6 space-y-6">
                     <div>
@@ -1366,18 +1273,18 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                             <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total de Usuários</span>
-                            <div class="text-3xl font-extrabold mt-2">${state.users.length}</div>
+                            <div class="text-3xl font-extrabold mt-2">${adm.users.length}</div>
                             <div class="text-xs text-brand-600 mt-1">Pacientes, Médicos e Recepção</div>
                         </div>
                         <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                             <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Consultas no Mês</span>
-                            <div class="text-3xl font-extrabold mt-2">${state.appointments.length + 142}</div>
-                            <div class="text-xs text-emerald-600 mt-1">+12% vs mês anterior</div>
+                            <div class="text-3xl font-extrabold mt-2">${Number(adm.appointmentsMonth)}</div>
+                            <div class="text-xs text-slate-400 mt-1">${Number(adm.appointmentsTotal)} agendamentos no total</div>
                         </div>
                         <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                             <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Status LGPD / Criptografia</span>
                             <div class="text-xl font-extrabold text-amber-600 mt-2"><i class="fa-solid fa-triangle-exclamation"></i> Não verificado</div>
-                            <div class="text-xs text-slate-400 mt-1">Protótipo: dados em memória, sem criptografia em repouso</div>
+                            <div class="text-xs text-slate-400 mt-1">Criptografia em repouso depende do provedor do banco; o app não verifica</div>
                         </div>
                     </div>
 
@@ -1395,7 +1302,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
-                                    ${state.users.map((x) => `
+                                    ${adm.users.map((x) => `
                                         <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/20">
                                             <td class="py-3 font-medium">${esc(x.name)}</td>
                                             <td class="py-3 text-slate-500 text-xs">${esc(x.email)}</td>
@@ -1413,8 +1320,8 @@
                     </div>
 
                     <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-                        <h3 class="font-bold text-lg mb-1">Trilha de Auditoria (sessão atual)</h3>
-                        <p class="text-xs text-slate-400 mb-4">Últimos 10 eventos. Em produção, o registro deve ser gravado no servidor, de forma imutável.</p>
+                        <h3 class="font-bold text-lg mb-1">Trilha de Auditoria</h3>
+                        <p class="text-xs text-slate-400 mb-4">Últimos 10 eventos, gravados no servidor.</p>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-xs">
                                 <thead class="border-b border-slate-200 dark:border-slate-700 text-slate-400 uppercase">
@@ -1426,8 +1333,8 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
-                                    ${state.auditLog.length === 0 ? `<tr><td colspan="4" class="py-4 text-center text-slate-400">Nenhum evento registrado.</td></tr>` : ''}
-                                    ${state.auditLog.slice(0, 10).map((e) => `
+                                    ${adm.audit.length === 0 ? `<tr><td colspan="4" class="py-4 text-center text-slate-400">Nenhum evento registrado.</td></tr>` : ''}
+                                    ${adm.audit.map((e) => `
                                         <tr>
                                             <td class="py-2 whitespace-nowrap">${esc(new Date(e.ts).toLocaleString('pt-BR'))}</td>
                                             <td class="py-2">${esc(e.user)}</td>
@@ -1443,31 +1350,32 @@
             `;
         }
 
-        function resetUserPassword(userId) {
+        async function resetUserPassword(userId) {
             if (!requireRole('Admin')) return;
-            const target = state.users.find((x) => x.id === userId);
-            if (!target) return;
-            audit('Redefinição de senha solicitada', target.email);
-            showMessageBox('Senha Redefinida (simulação)', `Em produção, um e-mail de redefinição seria enviado para ${target.email}.`, 'fa-key');
+            try {
+                const r = await api('POST', `/admin/users/${Number(userId)}/reset-password`);
+                showMessageBox('Redefinição Solicitada', `A solicitação para ${r.email} foi registrada na auditoria. O envio do e-mail de redefinição ainda não está ligado.`, 'fa-key');
+                await refreshData();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
             render();
         }
 
         function deleteUser(userId) {
             const me = requireRole('Admin');
             if (!me) return;
-            const target = state.users.find((x) => x.id === userId);
+            const target = state.admin && state.admin.users.find((x) => x.id === userId);
             if (!target) return;
             if (target.id === me.id) return showToast('Você não pode remover a própria conta.', 'error');
-            if (target.role === 'Admin' && state.users.filter((x) => x.role === 'Admin').length <= 1) {
-                return showToast('Não é possível remover o último administrador.', 'error');
-            }
-            showConfirm('Remover usuário?', `A conta de ${target.email} será removida. Esta ação não pode ser desfeita.`, () => {
-                if (!requireRole('Admin')) return; // reconfere a permissão no momento da confirmação
-                const idx = state.users.findIndex((x) => x.id === userId);
-                if (idx === -1) return;
-                const removed = state.users.splice(idx, 1)[0];
-                audit('Usuário removido', removed.email);
-                showToast('Usuário removido com sucesso.', 'info');
+            showConfirm('Remover usuário?', `A conta de ${target.email} será removida. Esta ação não pode ser desfeita.`, async () => {
+                try {
+                    await api('DELETE', `/admin/users/${Number(userId)}`); // o servidor reconfere permissão e regras
+                    await refreshData();
+                    showToast('Usuário removido com sucesso.', 'info');
+                } catch (e) {
+                    showToast(e.message, 'error');
+                }
                 render();
             });
         }
@@ -1554,9 +1462,24 @@
             }
         }, 15000);
 
-        // Inicialização
+        // Inicialização: lê config e sessão atual do servidor (cookie HttpOnly) e carrega os médicos.
         applyTheme(readTheme());
         render();
+        (async () => {
+            try {
+                const cfg = await api('GET', '/config');
+                DEMO_MODE = !!cfg.demo;
+                DEMO_PASSWORD_HINT = cfg.demoPassword || '';
+                const me = await api('GET', '/auth/me');
+                if (me.user) state.currentUser = Object.freeze(Object.assign({ cpf: null, doctorName: null }, me.user));
+                await refreshData();
+                if (state.currentUser) state.currentTab = TAB_BY_ROLE[state.currentUser.role];
+            } catch (_) {
+                showToast('Não foi possível falar com o servidor. Recarregue a página.', 'error');
+            }
+            state.loading = false;
+            render();
+        })();
     })();
     </script>
 </body>

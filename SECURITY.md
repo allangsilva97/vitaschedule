@@ -1,13 +1,16 @@
 # Segurança
 
-## Para que serve este projeto
+## Arquitetura de segurança
 
-O VitaSchedule é um **protótipo de interface**. Não há servidor, banco de dados nem rede: tudo (usuários,
-agendamentos, prontuários) é fictício e vive na memória da aba do navegador.
+Autenticação, autorização, validação, limite de tentativas e auditoria rodam **no servidor** (`api/`). O front só
+exibe o que a API devolve; esconder botões é conveniência de UI, não controle de acesso. A sessão é um JWT em cookie
+`HttpOnly; Secure; SameSite=Strict` (15 min deslizantes); mutações exigem o cabeçalho `X-Requested-With`; senhas usam
+scrypt; horários duplos são barrados por índice único no banco. A API serve o `index.html` na mesma origem
+(`connect-src 'self'`).
 
-Isso define o limite do que a segurança no código pode fazer: **quem controla o navegador controla o app.**
-Qualquer pessoa com o DevTools consegue alterar variáveis, pular o login ou ler os hashes de senha que estão
-no código. Autenticação e autorização de verdade só existem com um servidor.
+**Limites atuais:** o limitador de tentativas é em memória (vale por instância); 2FA ainda é só um campo; e-mails de
+confirmação/lembrete e redefinição de senha **não são enviados** (apenas registrados); criptografia em repouso depende do
+provedor do banco. Os dados semeados com `SEED_DEMO=true` são fictícios e a senha de demonstração é pública.
 
 ## O que o código já faz
 
