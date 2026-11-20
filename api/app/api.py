@@ -32,6 +32,17 @@ def err(status: int, msg: str) -> HTTPException:
 
 
 def client_ip(request: Request) -> str:
+    """IP usado pelos limitadores de tentativas.
+
+    Atrás de proxies de confiança, defina TRUSTED_PROXY_HOPS com quantos proxies ficam na frente do app:
+    o IP é a N-ésima entrada de X-Forwarded-For contada da DIREITA, a que o nosso proxy acrescentou. Entradas
+    à esquerda vêm do cliente e podem ser forjadas, então nunca valem. Com 0 (padrão) vale só o par TCP.
+    """
+    hops = int(os.environ.get("TRUSTED_PROXY_HOPS", "0") or 0)
+    if hops > 0:
+        chain = [p.strip() for p in request.headers.get("x-forwarded-for", "").split(",") if p.strip()]
+        if len(chain) >= hops:
+            return chain[-hops]
     return request.client.host if request.client else "?"
 
 

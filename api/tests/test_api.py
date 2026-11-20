@@ -126,3 +126,31 @@ def test_login_throttle(client):
     client.post("/api/auth/logout", headers=H)
     codes = [login(client, "throttle@x.com", "x").status_code for _ in range(6)]
     assert codes[-1] == 429
+
+
+def _req(xff=None, peer="10.0.0.9"):
+    from starlette.requests import Request
+    headers = [(b"x-forwarded-for", xff.encode())] if xff else []
+    return Request({"type": "http", "headers": headers, "client": (peer, 1234)})
+
+
+def test_client_ip_ignores_forged_forwarded_for(monkeypatch):
+    from app.api import client_ip
+    monkeypatch.delenv("TRUSTED_PROXY_HOPS", raising=False)
+    assert client_ip(_req("1.2.3.4")) == "10.0.0.9"  # sem proxy confiável: só vale o par TCP
+    monkeypatch.setenv("TRUSTED_PROXY_HOPS", "1")
+    assert client_ip(_req("6.6.6.6, 203.0.113.7")) == "203.0.113.7"  # entrada forjada à esquerda é ignorada
+    assert client_ip(_req()) == "10.0.0.9"  # sem cabeçalho: par TCP
+    monkeypatch.setenv("TRUSTED_PROXY_HOPS", "2")
+    assert client_ip(_req("203.0.113.7")) == "10.0.0.9"  # cadeia menor que o esperado: não confia
+
+
+def test_lookup_throttle_not_bypassed_by_forged_forwarded_for(client, monkeypatch):
+    from app.api import lookup_throttle
+    monkeypatch.delenv("TRUSTED_PROXY_HOPS", raising=False)
+    lookup_throttle.fails.clear()
+    lookup_throttle.locked.clear()
+    body = {"protocol": "VIT-ZZZZ9999", "cpf": "52998224725"}
+    codes = [client.post("/api/appointments/lookup", json=body, headers={**H, "X-Forwarded-For": f"9.9.9.{i}"}).status_code
+             for i in range(6)]
+    assert codes[:5] == [404] * 5 and codes[5] == 429

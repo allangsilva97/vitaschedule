@@ -7,14 +7,19 @@ services:
     plan: free
     region: oregon
     buildCommand: pip install -r api/requirements.txt
-    # Aplica as migrações do Alembic antes de subir. proxy-headers: IP real do cliente atrás do proxy do Render.
-    startCommand: cd api && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
+    # Aplica as migrações do Alembic antes de subir. Não use --forwarded-allow-ips='*': o uvicorn passaria a
+    # confiar no X-Forwarded-For enviado pelo cliente e os limitadores de tentativas seriam burlados.
+    startCommand: cd api && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/healthz
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.8
       - key: APP_ENV
         value: production
+      # Quantos proxies de confiança ficam na frente do app (IP do cliente = última entrada do X-Forwarded-For).
+      # Confira nos logs de um deploy real se o IP gravado é o do visitante; se aparecer o IP do proxy, ajuste.
+      - key: TRUSTED_PROXY_HOPS
+        value: "1"
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL

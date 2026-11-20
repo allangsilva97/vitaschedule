@@ -26,7 +26,8 @@ SEED_DEMO=true .venv/Scripts/uvicorn app.main:app --reload                  # ht
 ```
 
 Variáveis: `DATABASE_URL` (Postgres em produção), `SECRET_KEY` (obrigatória com `APP_ENV=production`),
-`SEED_DEMO` (cria contas/dados fictícios se o banco estiver vazio), `DEMO_PASSWORD`.
+`SEED_DEMO` (cria contas/dados fictícios se o banco estiver vazio), `DEMO_PASSWORD`,
+`TRUSTED_PROXY_HOPS` (quantos proxies de confiança ficam na frente; padrão 0, usado só para o IP dos limitadores).
 Nova migração: `alembic revision --autogenerate -m "descrição"`.
 
 Deploy: `render.yaml` (Render > New > Blueprint). A API serve o `index.html` na mesma origem, então o cookie
